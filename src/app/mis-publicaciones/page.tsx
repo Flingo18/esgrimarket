@@ -37,7 +37,7 @@ export default async function MisPublicaciones({
 
   if (!user) redirect("/ingresar");
 
-  const [{ data: publicaciones }, { data: perfil }, cotizacion] = await Promise.all([
+  const [{ data: publicaciones }, { data: limiteCupo }, cotizacion] = await Promise.all([
     supabase
       .from("publicaciones")
       .select(
@@ -45,17 +45,13 @@ export default async function MisPublicaciones({
       )
       .eq("autor_id", user.id)
       .order("creado_en", { ascending: false }),
-    supabase
-      .from("perfiles")
-      .select("limite_publicaciones")
-      .eq("id", user.id)
-      .single(),
+    supabase.rpc("limite_efectivo", { usuario: user.id }),
     obtenerCotizacion(),
   ]);
 
   const lista = publicaciones ?? [];
   const activas = lista.filter((p) => p.situacion === "activa").length;
-  const limite = perfil?.limite_publicaciones ?? 5;
+  const limite = limiteCupo ?? 5;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">

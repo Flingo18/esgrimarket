@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ROLES } from "@/lib/roles";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 import { BorrarCuenta } from "@/components/borrar-cuenta";
@@ -9,6 +10,8 @@ import { BorrarCuenta } from "@/components/borrar-cuenta";
 import { FormularioPerfil } from "./formulario";
 
 export const metadata: Metadata = { title: "Mi cuenta" };
+
+
 
 export default async function PaginaCuenta() {
   const supabase = await crearClienteServidor();
@@ -21,7 +24,7 @@ export default async function PaginaCuenta() {
   const [{ data: perfil }, { data: salas }, { count: activas }] = await Promise.all([
     supabase
       .from("perfiles")
-      .select("nombre, telefono_visible, sala_id, limite_publicaciones, es_admin, zonas_entrega, barrio")
+      .select("nombre, telefono_visible, sala_id, rol, rol_hasta, zonas_entrega, barrio")
       .eq("id", user.id)
       .single(),
     supabase.from("salas").select("id, nombre, barrio").order("nombre"),
@@ -32,6 +35,10 @@ export default async function PaginaCuenta() {
       .eq("situacion", "activa"),
   ]);
 
+  const { data: limiteCupo } = await supabase.rpc("limite_efectivo", {
+    usuario: user.id,
+  });
+
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">Mi cuenta</h1>
@@ -41,15 +48,15 @@ export default async function PaginaCuenta() {
         <div className="flex justify-between">
           <span className="text-texto-suave">Publicaciones activas</span>
           <span className="font-medium">
-            {activas ?? 0} de {perfil?.limite_publicaciones ?? 5}
+            {activas ?? 0} de {limiteCupo ?? 5}
           </span>
         </div>
-        {perfil?.es_admin && (
-          <div className="flex justify-between mt-2">
-            <span className="text-texto-suave">Rol</span>
-            <span className="font-medium">Administrador</span>
-          </div>
-        )}
+        <div className="flex justify-between mt-2">
+          <span className="text-texto-suave">Tipo de cuenta</span>
+          <span className="font-medium">
+            {ROLES[perfil?.rol as keyof typeof ROLES] ?? "Regular"}
+          </span>
+        </div>
       </div>
 
       <div className="mt-8">

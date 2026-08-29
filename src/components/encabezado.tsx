@@ -10,6 +10,10 @@ export async function Encabezado() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: esAdmin } = user
+    ? await supabase.rpc("es_admin")
+    : { data: false };
+
   return (
     <header className="border-b border-borde sticky top-0 z-40 bg-fondo/90 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 h-14 flex items-center gap-4">
@@ -41,6 +45,14 @@ export async function Encabezado() {
             >
               Mi cuenta
             </Link>
+            {esAdmin && (
+              <Link
+                href="/admin"
+                className="text-sm text-texto-suave hover:text-texto"
+              >
+                Admin
+              </Link>
+            )}
             <Link
               href="/publicar"
               className="text-sm font-medium rounded-lg px-3 py-1.5 bg-acento text-acento-texto hover:opacity-90"

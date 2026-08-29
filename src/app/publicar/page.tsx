@@ -21,7 +21,7 @@ export default async function PaginaPublicar() {
     await Promise.all([
     supabase
       .from("perfiles")
-      .select("telefono_visible, limite_publicaciones, zonas_entrega, barrio")
+      .select("telefono_visible, zonas_entrega, barrio")
       .eq("id", user.id)
       .single(),
     supabase.from("salas").select("id, nombre, barrio").order("nombre"),
@@ -35,7 +35,11 @@ export default async function PaginaPublicar() {
     supabase.rpc("puede_cargar_stock"),
   ]);
 
-  const limite = perfil?.limite_publicaciones ?? 5;
+  const { data: limiteCupo } = await supabase.rpc("limite_efectivo", {
+    usuario: user.id,
+  });
+
+  const limite = limiteCupo ?? 5;
   const usadas = activas ?? 0;
 
   return (

@@ -27,9 +27,8 @@ export type Database = {
           sala_id: string | null;
           zonas_entrega: string[];
           barrio: string | null;
-          es_admin: boolean;
-          limite_publicaciones: number;
-          limite_hasta: string | null;
+          rol: string;
+          rol_hasta: string | null;
           creado_en: string;
           actualizado_en: string;
         };
@@ -41,9 +40,8 @@ export type Database = {
           sala_id?: string | null;
           zonas_entrega?: string[];
           barrio?: string | null;
-          es_admin?: boolean;
-          limite_publicaciones?: number;
-          limite_hasta?: string | null;
+          rol?: string;
+          rol_hasta?: string | null;
           creado_en?: string;
           actualizado_en?: string;
         };
@@ -226,6 +224,9 @@ export type Database = {
       /** Devuelve el teléfono de a uno; el resto del tiempo no se expone. */
       contacto_whatsapp: { Args: { pub_id: string }; Returns: string | null };
       es_admin: { Args: Record<never, never>; Returns: boolean };
+      /** Rol vigente, ya considerando el vencimiento del plan pro. */
+      rol_efectivo: { Args: { usuario: string }; Returns: string };
+      limite_efectivo: { Args: { usuario: string }; Returns: number };
       /** Admins y cuentas pagas: son los únicos que pueden publicar con stock. */
       puede_cargar_stock: { Args: Record<never, never>; Returns: boolean };
       /** Sólo la llama el cron, con la service role key. */
