@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useActionState, useState } from "react";
 
-import { actualizarSala, borrarSala, proponerSala } from "@/acciones/salas";
+import { actualizarSala, proponerSala } from "@/acciones/salas";
 import { ZONAS, ZONAS_AMBA, ZONAS_PROVINCIAS, type Punto } from "@/lib/geo";
 
 const CAMPO =
