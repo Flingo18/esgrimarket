@@ -10,13 +10,11 @@
  */
 export const FEDERACIONES = {
   fae: "FAE — Federación Argentina de Esgrima",
-  fecba: "FECBA — Federación de Esgrima de la Ciudad de Buenos Aires",
-  fepba: "Federación de Esgrima de la Provincia de Buenos Aires",
+  fecba: "Federación de Esgrima de la Ciudad de Buenos Aires",
   cordoba: "Federación Cordobesa de Esgrima",
   santafe: "Federación Santafesina de Esgrima",
   mendoza: "Federación Mendocina de Esgrima",
-  panamericana: "Confederación Panamericana de Esgrima",
-  fie: "FIE — Federación Internacional de Esgrima",
+  internacional: "Internacional",
 } as const;
 
 export type FederacionId = keyof typeof FEDERACIONES;
@@ -25,26 +23,22 @@ export type FederacionId = keyof typeof FEDERACIONES;
 export const FEDERACION_CORTA: Record<string, string> = {
   fae: "FAE",
   fecba: "FECBA",
-  fepba: "FEPBA",
   cordoba: "Córdoba",
   santafe: "Santa Fe",
   mendoza: "Mendoza",
-  panamericana: "Panamericana",
-  fie: "Internacional",
+  internacional: "Internacional",
 };
 
 const COLORES: Record<string, string> = {
   fae: "bg-acento-suave text-acento",
   fecba: "bg-precio/15 text-precio",
-  fie: "bg-fondo-sutil text-texto-suave",
-  panamericana: "bg-fondo-sutil text-texto-suave",
+  internacional: "bg-fondo-sutil text-texto-suave",
 };
 
 const PUNTOS: Record<string, string> = {
   fae: "var(--acento)",
   fecba: "var(--precio)",
-  fie: "var(--texto-suave)",
-  panamericana: "var(--texto-suave)",
+  internacional: "var(--texto-suave)",
 };
 
 /** Etiqueta del organizador: la federación, o el nombre del club. */
