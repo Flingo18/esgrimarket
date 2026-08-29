@@ -25,6 +25,9 @@ export async function Encabezado() {
           Esgrimarket
         </Link>
 
+        <Link href="/torneos" className="text-sm text-texto-suave hover:text-texto">
+          Torneos
+        </Link>
         <Link href="/mapa" className="text-sm text-texto-suave hover:text-texto">
           Mapa
         </Link>

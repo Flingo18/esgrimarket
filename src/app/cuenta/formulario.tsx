@@ -113,6 +113,13 @@ export function FormularioPerfil({
               </option>
             ))}
           </select>
+          <p className="text-xs text-texto-suave mt-1">
+            ¿No está la tuya?{" "}
+            <a href="/salas/proponer" className="text-acento underline">
+              Agregala
+            </a>{" "}
+            — la revisamos y la publicamos.
+          </p>
         </div>
       )}
 

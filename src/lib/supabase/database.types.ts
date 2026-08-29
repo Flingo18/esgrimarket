@@ -220,6 +220,42 @@ export type Database = {
           },
         ];
       };
+      torneos: {
+        Row: {
+          id: string;
+          nombre: string;
+          tipo: string;
+          fecha_inicio: string | null;
+          fecha_fin: string | null;
+          cierre_inscripcion: string | null;
+          lugar: string | null;
+          zona: string | null;
+          url_inscripcion: string | null;
+          notas: string | null;
+          situacion: string;
+          propuesto_por: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          nombre: string;
+          tipo?: string;
+          fecha_inicio?: string | null;
+          fecha_fin?: string | null;
+          cierre_inscripcion?: string | null;
+          lugar?: string | null;
+          zona?: string | null;
+          url_inscripcion?: string | null;
+          notas?: string | null;
+          situacion?: string;
+          propuesto_por?: string | null;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["torneos"]["Insert"]>;
+        Relationships: [];
+      };
       cotizacion_cache: {
         Row: { id: boolean; venta: number; fuente: string; actualizado: string };
         Insert: { id?: boolean; venta: number; fuente: string; actualizado?: string };

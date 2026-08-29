@@ -7,11 +7,12 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 
 import { FilaUsuario } from "./fila";
 import { FilaSalaPendiente, type SalaPendiente } from "./salas";
+import { FilaTorneoPendiente, type TorneoPendiente } from "./torneos";
 
 export const metadata: Metadata = { title: "Administración" };
 
 export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">) {
-  const { sala: resultadoSala } = await searchParams;
+  const { sala: resultadoSala, torneo: resultadoTorneo } = await searchParams;
   const supabase = await crearClienteServidor();
   const {
     data: { user },
@@ -40,6 +41,12 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
     .select("id, nombre, barrio, zona, lat, activa, situacion")
     .eq("situacion", "aprobada")
     .order("nombre");
+
+  const { data: torneosPendientes } = await admin
+    .from("torneos")
+    .select("id, nombre, tipo, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, url_inscripcion, notas")
+    .eq("situacion", "pendiente")
+    .order("creado_en", { ascending: true });
 
   const { data: salasPendientes } = await admin
     .from("salas")
@@ -80,6 +87,14 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
     <div className="mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">Administración</h1>
 
+      {typeof resultadoTorneo === "string" && (
+        <p className="mt-4 rounded-lg border border-precio/40 bg-precio/10 px-3 py-2 text-sm text-precio">
+          {resultadoTorneo === "aprobado"
+            ? "Torneo aprobado. Ya está en el calendario."
+            : "Torneo rechazado. No se publica."}
+        </p>
+      )}
+
       {typeof resultadoSala === "string" && (
         <p className="mt-4 rounded-lg border border-precio/40 bg-precio/10 px-3 py-2 text-sm text-precio">
           {resultadoSala === "aprobada"
@@ -108,6 +123,19 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
           </div>
         ))}
       </div>
+
+      {torneosPendientes && torneosPendientes.length > 0 && (
+        <>
+          <h2 className="mt-10 text-lg font-semibold">
+            Torneos esperando aprobación ({torneosPendientes.length})
+          </h2>
+          <ul className="mt-4 space-y-2">
+            {(torneosPendientes as TorneoPendiente[]).map((t) => (
+              <FilaTorneoPendiente key={t.id} torneo={t} />
+            ))}
+          </ul>
+        </>
+      )}
 
       {salasPendientes && salasPendientes.length > 0 && (
         <>
