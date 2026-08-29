@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 
 import { guardarPerfil } from "@/acciones/perfil";
 import { ZONAS } from "@/lib/geo";
+import { SelectorZonas } from "@/components/selector-zonas";
 
 const CAMPO =
   "w-full rounded-lg border border-borde bg-fondo-elevado px-3 py-2.5 " +
@@ -73,25 +74,11 @@ export function FormularioPerfil({
         <label className="block text-sm font-medium mb-1.5">
           ¿Dónde entregás habitualmente?
         </label>
-        <div className="grid grid-cols-2 gap-2">
-          {Object.entries(ZONAS).map(([id, z]) => (
-            <label key={id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="zonas_entrega"
-                value={id}
-                checked={zonas.includes(id)}
-                onChange={(e) =>
-                  setZonas((prev) =>
-                    e.target.checked ? [...prev, id] : prev.filter((x) => x !== id),
-                  )
-                }
-                className="size-4 accent-[var(--acento)]"
-              />
-              <span>{z.label}</span>
-            </label>
-          ))}
-        </div>
+        <SelectorZonas
+          nombre="zonas_entrega"
+          seleccionadas={zonas}
+          alCambiar={setZonas}
+        />
         <p className="text-xs text-texto-suave mt-1">
           Vienen marcadas de entrada en cada publicación nueva. Después podés
           recortarlas si algo lo entregás en un solo lado.

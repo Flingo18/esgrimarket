@@ -77,32 +77,83 @@ export const CENTRO_MAPA: Punto = { lat: -34.513291, lng: -58.47495 };
 export const ZOOM_INICIAL = 12;
 
 /**
- * Zonas de retiro. El vendedor elige una zona (obligatoria) y opcionalmente
- * marca un punto en el mapa, que se difumina. La zona sola ya alcanza para
- * que el comprador sepa si le queda cerca.
+ * Zonas de entrega: el AMBA desagregado, y después todas las provincias.
+ *
+ * El área metropolitana va separada porque es donde está la comunidad y donde
+ * la distinción importa de verdad: alguien de Palermo y alguien de San Isidro
+ * no se cruzan por casualidad, aunque los dos digan "Buenos Aires".
  */
+const BARRIOS_CABA = [
+  "Agronomía", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo",
+  "Caballito", "Chacarita", "Coghlan", "Colegiales", "Constitución",
+  "Flores", "Floresta", "La Boca", "La Paternal", "Liniers", "Mataderos",
+  "Monte Castro", "Montserrat", "Nueva Pompeya", "Núñez", "Palermo",
+  "Parque Avellaneda", "Parque Chacabuco", "Parque Chas", "Parque Patricios",
+  "Puerto Madero", "Recoleta", "Retiro", "Saavedra", "San Cristóbal",
+  "San Nicolás", "San Telmo", "Vélez Sarsfield", "Versalles",
+  "Villa Crespo", "Villa del Parque", "Villa Devoto", "Villa General Mitre",
+  "Villa Lugano", "Villa Luro", "Villa Ortúzar", "Villa Pueyrredón",
+  "Villa Real", "Villa Riachuelo", "Villa Santa Rita", "Villa Soldati",
+  "Villa Urquiza",
+] as const;
+
+export type GrupoZona = "amba" | "provincias";
+
+type Zona = {
+  label: string;
+  grupo: GrupoZona;
+  barrios: readonly string[];
+};
+
+const provincia = (label: string): Zona => ({
+  label,
+  grupo: "provincias",
+  barrios: [],
+});
+
 export const ZONAS = {
   caba: {
     label: "Ciudad de Buenos Aires",
-    barrios: [
-      "Agronomía", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo",
-      "Caballito", "Chacarita", "Coghlan", "Colegiales", "Constitución",
-      "Flores", "Floresta", "La Boca", "La Paternal", "Liniers", "Mataderos",
-      "Monte Castro", "Montserrat", "Nueva Pompeya", "Núñez", "Palermo",
-      "Parque Avellaneda", "Parque Chacabuco", "Parque Chas", "Parque Patricios",
-      "Puerto Madero", "Recoleta", "Retiro", "Saavedra", "San Cristóbal",
-      "San Nicolás", "San Telmo", "Vélez Sarsfield", "Versalles",
-      "Villa Crespo", "Villa del Parque", "Villa Devoto", "Villa General Mitre",
-      "Villa Lugano", "Villa Luro", "Villa Ortúzar", "Villa Pueyrredón",
-      "Villa Real", "Villa Riachuelo", "Villa Santa Rita", "Villa Soldati",
-      "Villa Urquiza",
-    ],
+    grupo: "amba",
+    barrios: BARRIOS_CABA,
   },
-  gba_norte: { label: "GBA Norte", barrios: [] as string[] },
-  gba_oeste: { label: "GBA Oeste", barrios: [] as string[] },
-  gba_sur: { label: "GBA Sur", barrios: [] as string[] },
-  interior: { label: "Interior del país", barrios: [] as string[] },
-} as const;
+  gba_norte: { label: "GBA Norte", grupo: "amba", barrios: [] },
+  gba_oeste: { label: "GBA Oeste", grupo: "amba", barrios: [] },
+  gba_sur: { label: "GBA Sur", grupo: "amba", barrios: [] },
+
+  buenos_aires: provincia("Buenos Aires (resto)"),
+  catamarca: provincia("Catamarca"),
+  chaco: provincia("Chaco"),
+  chubut: provincia("Chubut"),
+  cordoba: provincia("Córdoba"),
+  corrientes: provincia("Corrientes"),
+  entre_rios: provincia("Entre Ríos"),
+  formosa: provincia("Formosa"),
+  jujuy: provincia("Jujuy"),
+  la_pampa: provincia("La Pampa"),
+  la_rioja: provincia("La Rioja"),
+  mendoza: provincia("Mendoza"),
+  misiones: provincia("Misiones"),
+  neuquen: provincia("Neuquén"),
+  rio_negro: provincia("Río Negro"),
+  salta: provincia("Salta"),
+  san_juan: provincia("San Juan"),
+  san_luis: provincia("San Luis"),
+  santa_cruz: provincia("Santa Cruz"),
+  santa_fe: provincia("Santa Fe"),
+  santiago_del_estero: provincia("Santiago del Estero"),
+  tierra_del_fuego: provincia("Tierra del Fuego"),
+  tucuman: provincia("Tucumán"),
+} as const satisfies Record<string, Zona>;
+
+/** Para armar los dos bloques del formulario sin repetir la lista. */
+export const ZONAS_AMBA = Object.entries(ZONAS).filter(
+  ([, z]) => z.grupo === "amba",
+) as [ZonaId, Zona][];
+
+export const ZONAS_PROVINCIAS = Object.entries(ZONAS).filter(
+  ([, z]) => z.grupo === "provincias",
+) as [ZonaId, Zona][];
 
 export type ZonaId = keyof typeof ZONAS;
 

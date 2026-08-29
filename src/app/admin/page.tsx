@@ -5,10 +5,12 @@ import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 import { FilaUsuario } from "./fila";
+import { FilaSalaPendiente, type SalaPendiente } from "./salas";
 
 export const metadata: Metadata = { title: "Administración" };
 
-export default async function PaginaAdmin() {
+export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">) {
+  const { sala: resultadoSala } = await searchParams;
   const supabase = await crearClienteServidor();
   const {
     data: { user },
@@ -31,6 +33,12 @@ export default async function PaginaAdmin() {
       admin.from("perfiles").select("id, nombre, rol, rol_hasta, telefono_visible"),
       admin.from("publicaciones").select("id", { count: "exact", head: true }),
     ]);
+
+  const { data: salasPendientes } = await admin
+    .from("salas")
+    .select("id, nombre, direccion, barrio, zona, telefono, instagram, nota, lat, lng")
+    .eq("situacion", "pendiente")
+    .order("creado_en", { ascending: true });
 
   const { data: activasPorAutor } = await admin
     .from("publicaciones")
@@ -65,6 +73,14 @@ export default async function PaginaAdmin() {
     <div className="mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">Administración</h1>
 
+      {typeof resultadoSala === "string" && (
+        <p className="mt-4 rounded-lg border border-precio/40 bg-precio/10 px-3 py-2 text-sm text-precio">
+          {resultadoSala === "aprobada"
+            ? "Sala aprobada. Ya aparece en el mapa."
+            : "Sala rechazada. No se publica."}
+        </p>
+      )}
+
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           ["Cuentas", filas.length],
@@ -81,6 +97,23 @@ export default async function PaginaAdmin() {
           </div>
         ))}
       </div>
+
+      {salasPendientes && salasPendientes.length > 0 && (
+        <>
+          <h2 className="mt-10 text-lg font-semibold">
+            Salas esperando aprobación ({salasPendientes.length})
+          </h2>
+          <p className="text-sm text-texto-suave mt-1">
+            Propuestas por la comunidad. No aparecen en el mapa hasta que las
+            apruebes.
+          </p>
+          <ul className="mt-4 space-y-2">
+            {(salasPendientes as SalaPendiente[]).map((s) => (
+              <FilaSalaPendiente key={s.id} sala={s} />
+            ))}
+          </ul>
+        </>
+      )}
 
       <h2 className="mt-10 text-lg font-semibold">Cuentas</h2>
       <p className="text-sm text-texto-suave mt-1">

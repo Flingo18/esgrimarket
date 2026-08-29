@@ -68,6 +68,10 @@ export type Database = {
           sitio_web: string | null;
           instagram: string | null;
           activa: boolean;
+          situacion: string;
+          propuesta_por: string | null;
+          zona: string | null;
+          nota: string | null;
           creado_en: string;
         };
         Insert: {
@@ -81,6 +85,10 @@ export type Database = {
           sitio_web?: string | null;
           instagram?: string | null;
           activa?: boolean;
+          situacion?: string;
+          propuesta_por?: string | null;
+          zona?: string | null;
+          nota?: string | null;
           creado_en?: string;
         };
         Update: Partial<Database["public"]["Tables"]["salas"]["Insert"]>;

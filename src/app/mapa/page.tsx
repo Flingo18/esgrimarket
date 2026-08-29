@@ -33,8 +33,6 @@ export default async function PaginaMapa() {
     .filter((s): s is SalaMapa => s.lat !== null && s.lng !== null)
     .map((s) => ({ ...s }));
 
-  const sinMapa = (salas ?? []).filter((s) => s.lat === null || s.lng === null);
-
   const zonas: ZonaMapa[] = (publicaciones ?? [])
     .filter((p) => p.lat_aprox !== null && p.lng_aprox !== null)
     .map((p) => ({
@@ -95,15 +93,13 @@ export default async function PaginaMapa() {
         ))}
       </ul>
 
-      {sinMapa.length > 0 && (
-        <p className="mt-6 text-sm text-texto-suave">
-          ¿Falta tu sala o tenés la dirección de alguna?{" "}
-          <Link href="/" className="text-acento underline">
-            Avisanos
-          </Link>
-          .
-        </p>
-      )}
+      <p className="mt-6 text-sm text-texto-suave">
+        ¿Falta tu club?{" "}
+        <Link href="/salas/proponer" className="text-acento underline">
+          Proponelo
+        </Link>
+        . Lo revisamos antes de publicarlo.
+      </p>
     </div>
   );
 }

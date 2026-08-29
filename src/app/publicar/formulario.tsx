@@ -5,6 +5,7 @@ import { useActionState, useMemo, useState } from "react";
 
 import { actualizarPublicacion, crearPublicacion } from "@/acciones/publicar";
 import { RADIO_DISPLAY_M, ZONAS, difuminarUbicacion } from "@/lib/geo";
+import { SelectorZonas } from "@/components/selector-zonas";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import {
   ANIO_MINIMO,
@@ -502,25 +503,7 @@ export function FormularioPublicar({
             : "Podés marcar más de una."
         }
       >
-        <div className="grid grid-cols-2 gap-2">
-          {Object.entries(ZONAS).map(([id, z]) => (
-            <label key={id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="zonas"
-                value={id}
-                checked={zonas.includes(id)}
-                onChange={(e) =>
-                  setZonas((prev) =>
-                    e.target.checked ? [...prev, id] : prev.filter((x) => x !== id),
-                  )
-                }
-                className="size-4 accent-[var(--acento)]"
-              />
-              <span>{z.label}</span>
-            </label>
-          ))}
-        </div>
+        <SelectorZonas nombre="zonas" seleccionadas={zonas} alCambiar={setZonas} />
       </Campo>
 
       {zonas.includes("caba") && (

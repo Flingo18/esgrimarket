@@ -1,5 +1,5 @@
 import { ARMAS, CATEGORIAS, MANOS } from "@/lib/taxonomy";
-import { ZONAS } from "@/lib/geo";
+import { ZONAS_AMBA, ZONAS_PROVINCIAS } from "@/lib/geo";
 
 const SELECT =
   "rounded-lg border border-borde bg-fondo-elevado px-2.5 py-2 text-sm outline-none focus:border-acento";
@@ -45,10 +45,19 @@ export function Filtros({
       </select>
 
       <select name="zona" defaultValue={valores.zona ?? ""} className={SELECT}>
-        <option value="">Toda la ciudad</option>
-        {Object.entries(ZONAS).map(([id, z]) => (
-          <option key={id} value={id}>{z.label}</option>
-        ))}
+        <option value="">Cualquier zona</option>
+        {/* Agrupado: sin esto son 27 opciones seguidas y encontrar la propia
+            provincia se vuelve una lectura larga. */}
+        <optgroup label="Buenos Aires">
+          {ZONAS_AMBA.map(([id, z]) => (
+            <option key={id} value={id}>{z.label}</option>
+          ))}
+        </optgroup>
+        <optgroup label="Resto del país">
+          {ZONAS_PROVINCIAS.map(([id, z]) => (
+            <option key={id} value={id}>{z.label}</option>
+          ))}
+        </optgroup>
       </select>
 
       <select name="orden" defaultValue={valores.orden ?? ""} className={SELECT}>
