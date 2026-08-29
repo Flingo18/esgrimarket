@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { proponerTorneo } from "@/acciones/torneos";
-import { FEDERACIONES_SUGERIDAS } from "@/lib/torneos";
+import { FEDERACIONES } from "@/lib/torneos";
 
 const CAMPO =
   "w-full rounded-lg border border-borde bg-fondo-elevado px-3 py-2.5 " +
@@ -27,8 +27,13 @@ function Campo({
   );
 }
 
-export function FormularioTorneo() {
+type Sala = { id: string; nombre: string };
+
+export function FormularioTorneo({ salas }: { salas: Sala[] }) {
   const [estado, accion, enviando] = useActionState(proponerTorneo, {});
+  const [organizador, setOrganizador] = useState<"federacion" | "club">(
+    "federacion",
+  );
 
   if (estado.ok) {
     return (
@@ -44,17 +49,51 @@ export function FormularioTorneo() {
         <input name="nombre" required maxLength={140} className={CAMPO} />
       </Campo>
 
-      <Campo
-        etiqueta="Federación"
-        ayuda="Elegí una de la lista o escribí otra: la lista crece sola."
-      >
-        <input name="federacion" list="federaciones" maxLength={60} className={CAMPO} />
-        <datalist id="federaciones">
-          {FEDERACIONES_SUGERIDAS.map((f) => (
-            <option key={f} value={f} />
+      <Campo etiqueta="¿Quién lo organiza?">
+        <div className="flex gap-4">
+          {(
+            [
+              ["federacion", "Una federación"],
+              ["club", "Un club"],
+            ] as const
+          ).map(([valor, etiqueta]) => (
+            <label key={valor} className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="organizador_tipo"
+                value={valor}
+                checked={organizador === valor}
+                onChange={() => setOrganizador(valor)}
+                className="size-4 accent-[var(--acento)]"
+              />
+              <span>{etiqueta}</span>
+            </label>
           ))}
-        </datalist>
+        </div>
       </Campo>
+
+      {organizador === "federacion" ? (
+        <Campo etiqueta="Federación">
+          <select name="federacion" required defaultValue="" className={CAMPO}>
+            <option value="">Elegí una…</option>
+            {Object.entries(FEDERACIONES).map(([id, nombre]) => (
+              <option key={id} value={id}>{nombre}</option>
+            ))}
+          </select>
+        </Campo>
+      ) : (
+        <Campo
+          etiqueta="Club organizador"
+          ayuda="Salen del mapa de salas. Si falta el club, agregalo primero desde el mapa."
+        >
+          <select name="sala_id" required defaultValue="" className={CAMPO}>
+            <option value="">Elegí uno…</option>
+            {salas.map((s) => (
+              <option key={s.id} value={s.id}>{s.nombre}</option>
+            ))}
+          </select>
+        </Campo>
+      )}
 
       <div className="grid sm:grid-cols-2 gap-4">
         <Campo etiqueta="Fecha de inicio" ayuda="Dejala vacía si todavía no se confirmó.">

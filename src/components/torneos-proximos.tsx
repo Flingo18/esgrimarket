@@ -1,7 +1,12 @@
 import Link from "next/link";
 
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { colorFederacion, diasHasta, rangoDeFechas } from "@/lib/torneos";
+import {
+  colorFederacion,
+  diasHasta,
+  nombreOrganizador,
+  rangoDeFechas,
+} from "@/lib/torneos";
 
 /**
  * Los torneos del próximo mes, arriba del listado de productos.
@@ -19,7 +24,7 @@ export async function TorneosProximos() {
 
   const { data } = await supabase
     .from("torneos")
-    .select("id, nombre, federacion, fecha_inicio, fecha_fin, lugar, cierre_inscripcion")
+    .select("id, nombre, federacion, salas(nombre), fecha_inicio, fecha_fin, lugar, cierre_inscripcion")
     .gte("fecha_inicio", iso(hoy))
     .lte("fecha_inicio", iso(enUnMes))
     .order("fecha_inicio")
@@ -51,7 +56,7 @@ export async function TorneosProximos() {
                     t.federacion,
                   )}`}
                 >
-                  {t.federacion ?? "Torneo"}
+                  {nombreOrganizador(t.federacion, t.salas?.nombre)}
                 </span>
                 <span className="text-sm font-medium">
                   {rangoDeFechas(t.fecha_inicio!, t.fecha_fin)}

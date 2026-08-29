@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import {
   colorFederacion,
+  nombreOrganizador,
   diasHasta,
   haceCuanto,
   interpretarContacto,
@@ -14,6 +15,7 @@ export type TorneoDetalle = {
   id: string;
   nombre: string;
   federacion: string | null;
+  salas: { nombre: string } | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
   cierre_inscripcion: string | null;
@@ -78,7 +80,7 @@ export function ModalTorneo({
               torneo.federacion,
             )}`}
           >
-            {torneo.federacion ?? "Sin federación"}
+            {nombreOrganizador(torneo.federacion, torneo.salas?.nombre)}
           </span>
           <button
             type="button"

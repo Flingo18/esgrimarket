@@ -7,7 +7,7 @@ import {
 } from "@/components/calendario-torneos";
 import { ListaTorneos } from "@/components/lista-torneos";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { claveMes, mesDe } from "@/lib/torneos";
+import { FEDERACIONES, claveMes, mesDe } from "@/lib/torneos";
 
 export const metadata: Metadata = {
   title: "Calendario de torneos",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 const COLUMNAS =
-  "id, nombre, federacion, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, actualizado_en";
+  "id, nombre, federacion, organizador_tipo, sala_id, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, actualizado_en";
 
 const SELECT =
   "rounded-lg border border-borde bg-fondo-elevado px-2.5 py-2 text-sm outline-none focus:border-acento";
@@ -38,15 +38,8 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
 
   // Las federaciones del filtro salen de los datos, no de una lista fija: así
   // agregar una es cargar un torneo y nada más.
-  const [{ data }, { data: todasLasFed }] = await Promise.all([
-    q,
-    supabase.from("torneos").select("federacion").not("federacion", "is", null),
-  ]);
-
+  const { data } = await q;
   const todos = data ?? [];
-  const federaciones = [
-    ...new Set((todasLasFed ?? []).map((f) => f.federacion as string)),
-  ].sort();
 
   const hoy = new Date().toISOString().slice(0, 10);
   const sinFecha = todos.filter((t) => !t.fecha_inicio);
@@ -100,9 +93,9 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
           <input type="hidden" name="vista" value={vista} />
           {verPasados && <input type="hidden" name="pasados" value="1" />}
           <select name="federacion" defaultValue={federacion} className={SELECT}>
-            <option value="">Todas las federaciones</option>
-            {federaciones.map((f) => (
-              <option key={f} value={f}>{f}</option>
+            <option value="">Todos los organizadores</option>
+            {Object.entries(FEDERACIONES).map(([id, nombre]) => (
+              <option key={id} value={id}>{nombre}</option>
             ))}
           </select>
           <button

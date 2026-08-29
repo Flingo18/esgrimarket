@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { FEDERACIONES } from "@/lib/torneos";
 
 export type EstadoTorneo = { error?: string; ok?: string };
 
@@ -27,6 +28,18 @@ export async function proponerTorneo(
   const nombre = texto("nombre");
   if (!nombre || nombre.length < 3) return { error: "Poné el nombre del torneo." };
 
+  // El organizador es una federación de la lista, o un club del mapa.
+  const organizador = texto("organizador_tipo") === "club" ? "club" : "federacion";
+  const federacion = organizador === "federacion" ? texto("federacion") : null;
+  const salaId = organizador === "club" ? texto("sala_id") : null;
+
+  if (organizador === "federacion" && (!federacion || !(federacion in FEDERACIONES))) {
+    return { error: "Elegí la federación que lo organiza." };
+  }
+  if (organizador === "club" && !salaId) {
+    return { error: "Elegí el club que lo organiza." };
+  }
+
   const inicio = texto("fecha_inicio");
   const fin = texto("fecha_fin");
   if (fin && inicio && fin < inicio) {
@@ -35,7 +48,9 @@ export async function proponerTorneo(
 
   const { error } = await supabase.from("torneos").insert({
     nombre,
-    federacion: texto("federacion"),
+    organizador_tipo: organizador,
+    federacion,
+    sala_id: salaId,
     fecha_inicio: inicio,
     fecha_fin: fin,
     cierre_inscripcion: texto("cierre_inscripcion"),

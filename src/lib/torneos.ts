@@ -1,32 +1,61 @@
 /**
- * Federaciones conocidas, sólo como sugerencia.
+ * Federaciones, en lista cerrada.
  *
- * El campo es texto libre a propósito: además de FAE y FECBA están las
- * provinciales, y van a ir apareciendo otras. El filtro se arma con las que
- * realmente existen en la base, así que agregar una es cargar un torneo y
- * nada más — no hay que tocar código.
+ * Un torneo lo organiza una federación o un club. Para el club se apunta a la
+ * sala del mapa, así que esta lista sólo cubre lo federativo — que es estable
+ * y se puede enumerar.
+ *
+ * Si falta alguna o algún nombre está mal, se corrige acá y nada más: los
+ * torneos ya cargados no se tocan.
  */
-export const FEDERACIONES_SUGERIDAS = [
-  "FAE",
-  "FECBA",
-  "Internacional",
-  "Federación Santafesina",
-  "Federación Cordobesa",
-  "Federación Mendocina",
-] as const;
+export const FEDERACIONES = {
+  fae: "FAE — Federación Argentina de Esgrima",
+  fecba: "FECBA — Federación de Esgrima de la Ciudad de Buenos Aires",
+  fepba: "Federación de Esgrima de la Provincia de Buenos Aires",
+  cordoba: "Federación Cordobesa de Esgrima",
+  santafe: "Federación Santafesina de Esgrima",
+  mendoza: "Federación Mendocina de Esgrima",
+  panamericana: "Confederación Panamericana de Esgrima",
+  fie: "FIE — Federación Internacional de Esgrima",
+} as const;
 
-/** Colores por federación, con un gris de reserva para las que no estén acá. */
+export type FederacionId = keyof typeof FEDERACIONES;
+
+/** Nombre corto, para las insignias donde no entra el completo. */
+export const FEDERACION_CORTA: Record<string, string> = {
+  fae: "FAE",
+  fecba: "FECBA",
+  fepba: "FEPBA",
+  cordoba: "Córdoba",
+  santafe: "Santa Fe",
+  mendoza: "Mendoza",
+  panamericana: "Panamericana",
+  fie: "Internacional",
+};
+
 const COLORES: Record<string, string> = {
-  FAE: "bg-acento-suave text-acento",
-  FECBA: "bg-precio/15 text-precio",
-  Internacional: "bg-fondo-sutil text-texto-suave",
+  fae: "bg-acento-suave text-acento",
+  fecba: "bg-precio/15 text-precio",
+  fie: "bg-fondo-sutil text-texto-suave",
+  panamericana: "bg-fondo-sutil text-texto-suave",
 };
 
 const PUNTOS: Record<string, string> = {
-  FAE: "var(--acento)",
-  FECBA: "var(--precio)",
-  Internacional: "var(--texto-suave)",
+  fae: "var(--acento)",
+  fecba: "var(--precio)",
+  fie: "var(--texto-suave)",
+  panamericana: "var(--texto-suave)",
 };
+
+/** Etiqueta del organizador: la federación, o el nombre del club. */
+export function nombreOrganizador(
+  federacion?: string | null,
+  club?: string | null,
+): string {
+  if (club) return club;
+  if (federacion) return FEDERACION_CORTA[federacion] ?? federacion;
+  return "Sin organizador";
+}
 
 export function colorFederacion(f?: string | null): string {
   return (f && COLORES[f]) || "bg-fondo-sutil text-texto-suave";

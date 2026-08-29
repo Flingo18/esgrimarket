@@ -44,7 +44,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
 
   const { data: torneosPendientes } = await admin
     .from("torneos")
-    .select("id, nombre, federacion, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas")
+    .select("id, nombre, federacion, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas")
     .eq("situacion", "pendiente")
     .order("creado_en", { ascending: true });
 

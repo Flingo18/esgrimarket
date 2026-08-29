@@ -16,6 +16,13 @@ export default async function PaginaProponerTorneo() {
 
   if (!user) redirect("/ingresar");
 
+  const { data: salas } = await supabase
+    .from("salas")
+    .select("id, nombre")
+    .eq("situacion", "aprobada")
+    .eq("activa", true)
+    .order("nombre");
+
   const { data: propios } = await supabase
     .from("torneos")
     .select("id, nombre, situacion")
@@ -46,7 +53,7 @@ export default async function PaginaProponerTorneo() {
       )}
 
       <div className="mt-8">
-        <FormularioTorneo />
+        <FormularioTorneo salas={salas ?? []} />
       </div>
 
       <p className="mt-8 text-sm text-texto-suave">

@@ -3,7 +3,12 @@
 import { useState } from "react";
 
 import { ModalTorneo, type TorneoDetalle } from "./modal-torneo";
-import { colorFederacion, diasHasta, rangoDeFechas } from "@/lib/torneos";
+import {
+  colorFederacion,
+  diasHasta,
+  nombreOrganizador,
+  rangoDeFechas,
+} from "@/lib/torneos";
 
 /**
  * Listado de torneos. Abre la misma ficha que el calendario, para que tocar
@@ -30,7 +35,7 @@ export function ListaTorneos({ torneos }: { torneos: TorneoDetalle[] }) {
                       t.federacion,
                     )}`}
                   >
-                    {t.federacion ?? "Sin federación"}
+                    {nombreOrganizador(t.federacion, t.salas?.nombre)}
                   </span>
                   {t.fecha_inicio && (
                     <span className="text-sm font-medium">

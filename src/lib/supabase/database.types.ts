@@ -225,6 +225,8 @@ export type Database = {
           id: string;
           nombre: string;
           federacion: string | null;
+          organizador_tipo: string;
+          sala_id: string | null;
           contacto_inscripcion: string | null;
           fecha_inicio: string | null;
           fecha_fin: string | null;
@@ -241,6 +243,8 @@ export type Database = {
           id?: string;
           nombre: string;
           federacion?: string | null;
+          organizador_tipo?: string;
+          sala_id?: string | null;
           contacto_inscripcion?: string | null;
           fecha_inicio?: string | null;
           fecha_fin?: string | null;
@@ -254,7 +258,15 @@ export type Database = {
           actualizado_en?: string;
         };
         Update: Partial<Database["public"]["Tables"]["torneos"]["Insert"]>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "torneos_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "salas";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       busquedas: {
         Row: {

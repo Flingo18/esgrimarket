@@ -3,12 +3,13 @@
 import { useActionState } from "react";
 
 import { moderarTorneo } from "@/acciones/torneos";
-import { interpretarContacto, rangoDeFechas } from "@/lib/torneos";
+import { interpretarContacto, nombreOrganizador, rangoDeFechas } from "@/lib/torneos";
 
 export type TorneoPendiente = {
   id: string;
   nombre: string;
   federacion: string | null;
+  salas: { nombre: string } | null;
   contacto_inscripcion: string | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
@@ -24,7 +25,7 @@ export function FilaTorneoPendiente({ torneo: t }: { torneo: TorneoPendiente }) 
   return (
     <li className="rounded-xl border border-borde bg-fondo-elevado p-3">
       <p className="text-xs text-texto-suave">
-        {t.federacion ?? "Sin federación"}
+        {nombreOrganizador(t.federacion, t.salas?.nombre)}
         {t.fecha_inicio
           ? ` · ${rangoDeFechas(t.fecha_inicio, t.fecha_fin)}`
           : " · sin fecha"}
