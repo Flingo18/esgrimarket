@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 
+import Link from "next/link";
+
 import { Encabezado } from "@/components/encabezado";
 
 import "./globals.css";
@@ -27,9 +29,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Encabezado />
         <main className="flex-1">{children}</main>
         <footer className="border-t border-borde mt-16">
-          <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-texto-suave">
-            Esgrimarket — hecho para la comunidad de esgrima de Buenos Aires.
-            Los precios en pesos son de referencia, calculados al dólar blue.
+          <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-texto-suave space-y-2">
+            <p>
+              Esgrimarket — hecho para la comunidad de esgrima de Buenos Aires.
+              Los precios en pesos son de referencia, calculados al dólar blue.
+            </p>
+            <p>
+              <Link href="/privacidad" className="underline hover:text-texto">
+                Privacidad
+              </Link>
+              {" · "}
+              <Link href="/mapa" className="underline hover:text-texto">
+                Mapa de salas
+              </Link>
+            </p>
           </div>
         </footer>
       </body>

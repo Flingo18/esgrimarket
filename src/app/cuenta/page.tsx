@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 
 import { crearClienteServidor } from "@/lib/supabase/server";
 
+import { BorrarCuenta } from "@/components/borrar-cuenta";
+
 import { FormularioPerfil } from "./formulario";
 
 export const metadata: Metadata = { title: "Mi cuenta" };
@@ -66,6 +68,10 @@ export default async function PaginaCuenta() {
           Ver mis publicaciones
         </Link>
       </p>
+
+      <div className="mt-12 pt-6 border-t border-borde">
+        <BorrarCuenta publicaciones={activas ?? 0} />
+      </div>
     </div>
   );
 }

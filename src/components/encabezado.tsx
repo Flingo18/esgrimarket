@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { cerrarSesion } from "@/acciones/auth";
+import { Logo } from "@/components/logo";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 export async function Encabezado() {
@@ -12,7 +13,11 @@ export async function Encabezado() {
   return (
     <header className="border-b border-borde sticky top-0 z-40 bg-fondo/90 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 h-14 flex items-center gap-4">
-        <Link href="/" className="font-semibold tracking-tight text-lg shrink-0">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-semibold tracking-tight text-lg shrink-0"
+        >
+          <Logo className="size-7 text-acento" />
           Esgrimarket
         </Link>
 

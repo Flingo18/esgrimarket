@@ -4,11 +4,6 @@ import { useEffect, useState } from "react";
 
 import { crearClienteNavegador } from "@/lib/supabase/client";
 
-/**
- * Último recurso: los tokens del flujo implícito viajan en el fragmento de
- * la URL (`#access_token=...`), que el navegador nunca manda al servidor.
- * Sólo se puede leer desde acá.
- */
 export function RescatarDesdeElFragmento({ destino }: { destino: string }) {
   const [fallo, setFallo] = useState(false);
 
@@ -22,6 +17,7 @@ export function RescatarDesdeElFragmento({ destino }: { destino: string }) {
       return;
     }
 
+    // El cliente del navegador sí puede escribir la cookie de sesión.
     crearClienteNavegador()
       .auth.setSession({ access_token, refresh_token })
       .then(({ error }) => {
