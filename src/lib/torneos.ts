@@ -14,6 +14,7 @@ export const FEDERACIONES = {
   cordoba: "Federación Cordobesa de Esgrima",
   santafe: "Federación Santafesina de Esgrima",
   mendoza: "Federación Mendocina de Esgrima",
+  fueguina: "Federación de Esgrima Fueguina",
   internacional: "Internacional",
 } as const;
 
@@ -26,6 +27,7 @@ export const FEDERACION_CORTA: Record<string, string> = {
   cordoba: "Córdoba",
   santafe: "Santa Fe",
   mendoza: "Mendoza",
+  fueguina: "Fueguina",
   internacional: "Internacional",
 };
 

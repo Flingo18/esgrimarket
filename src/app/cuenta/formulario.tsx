@@ -113,13 +113,12 @@ export function FormularioPerfil({
               </option>
             ))}
           </select>
-          <p className="text-xs text-texto-suave mt-1">
-            ¿No está la tuya?{" "}
-            <a href="/salas/proponer" className="text-acento underline">
-              Agregala
-            </a>{" "}
-            — la revisamos y la publicamos.
-          </p>
+          <a
+            href="/salas/proponer"
+            className="mt-2 inline-block rounded-lg border border-acento text-acento text-sm px-3 py-1.5 hover:bg-acento-suave"
+          >
+            + Agregar mi sala
+          </a>
         </div>
       )}
 

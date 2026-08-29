@@ -67,7 +67,21 @@ export default async function PaginaMapa() {
         )}
       </div>
 
-      <h2 className="mt-10 text-lg font-semibold">Salas</h2>
+      {/* El acceso va ANTES de la lista y como botón, no como renglón al pie:
+          tres personas pidieron que les agregaran su sala sin haber visto el
+          enlace que estaba abajo de todo. */}
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Salas</h2>
+        <Link
+          href="/salas/proponer"
+          className="rounded-lg bg-acento text-acento-texto text-sm font-medium px-4 py-2 hover:opacity-90"
+        >
+          + Agregar mi sala
+        </Link>
+      </div>
+      <p className="mt-1 text-sm text-texto-suave">
+        ¿Falta tu club? Cargalo vos: lo revisamos y lo publicamos.
+      </p>
       <ul className="mt-3 grid sm:grid-cols-2 gap-3">
         {(salas ?? []).map((s) => (
           <li key={s.id} className="rounded-xl border border-borde bg-fondo-elevado p-3">
@@ -93,13 +107,6 @@ export default async function PaginaMapa() {
         ))}
       </ul>
 
-      <p className="mt-6 text-sm text-texto-suave">
-        ¿Falta tu club?{" "}
-        <Link href="/salas/proponer" className="text-acento underline">
-          Proponelo
-        </Link>
-        . Lo revisamos antes de publicarlo.
-      </p>
     </div>
   );
 }
