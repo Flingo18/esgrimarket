@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import {
+  CalendarioTorneos,
+  type TorneoCalendario,
+} from "@/components/calendario-torneos";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
   COLOR_TIPO,
@@ -24,6 +28,7 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
   const params = await searchParams;
   const tipo = typeof params.tipo === "string" ? params.tipo : "";
   const verPasados = params.pasados === "1";
+  const vista = params.vista === "calendario" ? "calendario" : "lista";
 
   const supabase = await crearClienteServidor();
   let q = supabase
@@ -64,7 +69,23 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
         de cada una.
       </p>
 
-      <form className="mt-6 flex flex-wrap gap-2 items-center">
+      <div className="mt-6 inline-flex rounded-lg border border-borde overflow-hidden">
+        {(["lista", "calendario"] as const).map((v) => (
+          <Link
+            key={v}
+            href={`/torneos?vista=${v}${tipo ? `&tipo=${tipo}` : ""}`}
+            className={`px-4 py-2 text-sm ${
+              vista === v
+                ? "bg-acento text-acento-texto font-medium"
+                : "text-texto-suave hover:text-texto"
+            }`}
+          >
+            {v === "lista" ? "Lista" : "Calendario"}
+          </Link>
+        ))}
+      </div>
+
+      <form className="mt-4 flex flex-wrap gap-2 items-center">
         <select name="tipo" defaultValue={tipo} className={SELECT}>
           <option value="">Todos los tipos</option>
           {Object.entries(TIPOS_TORNEO).map(([id, label]) => (
@@ -72,28 +93,42 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
           ))}
         </select>
         {verPasados && <input type="hidden" name="pasados" value="1" />}
+        {vista === "calendario" && (
+          <input type="hidden" name="vista" value="calendario" />
+        )}
         <button
           type="submit"
           className="rounded-lg bg-acento text-acento-texto text-sm font-medium px-4 py-2 hover:opacity-90"
         >
           Filtrar
         </button>
-        <Link
-          href={verPasados ? `/torneos${tipo ? `?tipo=${tipo}` : ""}` : `/torneos?pasados=1${tipo ? `&tipo=${tipo}` : ""}`}
-          className="text-sm text-texto-suave underline hover:text-texto"
-        >
-          {verPasados ? "Ver los próximos" : `Ver los que ya pasaron (${pasados.length})`}
-        </Link>
+        {vista === "lista" && (
+          <Link
+            href={verPasados ? `/torneos${tipo ? `?tipo=${tipo}` : ""}` : `/torneos?pasados=1${tipo ? `&tipo=${tipo}` : ""}`}
+            className="text-sm text-texto-suave underline hover:text-texto"
+          >
+            {verPasados
+              ? "Ver los próximos"
+              : `Ver los que ya pasaron (${pasados.length})`}
+          </Link>
+        )}
       </form>
 
-      {aMostrar.length === 0 && sinFecha.length === 0 && (
+      {vista === "calendario" && (
+        <div className="mt-6">
+          <CalendarioTorneos torneos={conFecha as TorneoCalendario[]} />
+        </div>
+      )}
+
+      {vista === "lista" && aMostrar.length === 0 && sinFecha.length === 0 && (
         <p className="mt-12 text-center text-texto-suave">
           No hay torneos cargados con esos filtros.
         </p>
       )}
 
-      {[...porMes.entries()].map(([mes, torneos]) => (
-        <section key={mes} className="mt-8">
+      {vista === "lista" &&
+        [...porMes.entries()].map(([mes, torneos]) => (
+          <section key={mes} className="mt-8">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-texto-suave">
             {mesDe(torneos[0].fecha_inicio!)}
           </h2>
@@ -155,10 +190,10 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
               );
             })}
           </ul>
-        </section>
-      ))}
+          </section>
+        ))}
 
-      {!verPasados && sinFecha.length > 0 && (
+      {vista === "lista" && !verPasados && sinFecha.length > 0 && (
         <section className="mt-10">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-texto-suave">
             Fecha por confirmar

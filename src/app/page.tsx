@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Filtros } from "@/components/filtros";
 import { TarjetaPublicacion } from "@/components/tarjeta-publicacion";
+import { TorneosProximos } from "@/components/torneos-proximos";
 import { obtenerCotizacion } from "@/lib/dolar";
 import { listarPublicaciones, type Filtros as TipoFiltros } from "@/lib/publicaciones";
 import type { Arma, Categoria, Mano } from "@/lib/taxonomy";
@@ -41,6 +42,12 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
           Comprá y vendé entre gente de la comunidad. El contacto es directo por WhatsApp.
         </p>
       </div>
+
+      {/* Antes del listado: quien entra a mirar equipamiento se cruza con las
+          fechas que se le vienen encima. */}
+      <TorneosProximos />
+
+      <div className="mt-8" />
 
       <Filtros
         valores={{
