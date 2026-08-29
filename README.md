@@ -9,6 +9,18 @@ Publicás, filtrás, y el contacto se hace por WhatsApp. Sin chat interno y sin 
 - **Supabase** — Postgres, autenticación y storage de fotos
 - **Leaflet + OpenStreetMap** para el mapa (sin API key ni tarjeta)
 
+## En vivo
+
+**https://esgrimarket.vercel.app**
+
+Desplegado en Vercel desde `main`: cada push publica solo. Las variables de
+entorno viven en Vercel (Settings → Environment Variables), no en el repo.
+
+`NEXT_PUBLIC_SITE_URL` tiene que ser la URL de producción, no `localhost`: de
+ella salen los links de los mails de login. Y esa misma URL tiene que estar
+cargada en Supabase → Authentication → URL Configuration, o el login se rompe
+sin dar ningún error visible.
+
 ## Estado
 
 La base ya está creada y funcionando en el proyecto **Esgrimarket**
