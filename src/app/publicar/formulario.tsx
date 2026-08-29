@@ -79,7 +79,7 @@ export type PublicacionEditable = {
   moneda_base: string;
   monto: number;
   unidades: number;
-  zona: string;
+  zonas: string[];
   barrio: string | null;
   sala_entrega_id: string | null;
   fotos: string[];
@@ -90,12 +90,15 @@ export function FormularioPublicar({
   salas,
   inicial,
   puedeCargarStock = false,
+  zonasDelPerfil = [],
 }: {
   telefonoGuardado: string;
   salas: Sala[];
   inicial?: PublicacionEditable;
   /** Admins y cuentas pagas. El permiso real lo aplica la base. */
   puedeCargarStock?: boolean;
+  /** Zonas habituales del perfil: vienen marcadas de entrada. */
+  zonasDelPerfil?: string[];
 }) {
   const editando = Boolean(inicial);
   const [estado, accion, enviando] = useActionState(
@@ -107,7 +110,9 @@ export function FormularioPublicar({
     (inicial?.categoria as Categoria) ?? "",
   );
   const [tipo, setTipo] = useState(inicial?.tipo ?? "");
-  const [zona, setZona] = useState(inicial?.zona ?? "");
+  const [zonas, setZonas] = useState<string[]>(
+    inicial?.zonas ?? (zonasDelPerfil.length > 0 ? zonasDelPerfil : []),
+  );
   const [fotos, setFotos] = useState<string[]>(inicial?.fotos ?? []);
   const [subiendo, setSubiendo] = useState(false);
   const [ubicacion, setUbicacion] = useState<{ lat: number; lng: number } | null>(null);
@@ -489,23 +494,37 @@ export function FormularioPublicar({
 
       {/* ─────────── Dónde ─────────── */}
 
-      <Campo etiqueta="Zona de entrega">
-        <select
-          name="zona"
-          required
-          value={zona}
-          onChange={(e) => setZona(e.target.value)}
-          className={CAMPO}
-        >
-          <option value="">Elegí una…</option>
+      <Campo
+        etiqueta="¿Dónde lo entregás?"
+        ayuda={
+          zonasDelPerfil.length > 0 && !inicial
+            ? "Vienen marcadas las de tu perfil. Podés recortarlas para esta publicación."
+            : "Podés marcar más de una."
+        }
+      >
+        <div className="grid grid-cols-2 gap-2">
           {Object.entries(ZONAS).map(([id, z]) => (
-            <option key={id} value={id}>{z.label}</option>
+            <label key={id} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="zonas"
+                value={id}
+                checked={zonas.includes(id)}
+                onChange={(e) =>
+                  setZonas((prev) =>
+                    e.target.checked ? [...prev, id] : prev.filter((x) => x !== id),
+                  )
+                }
+                className="size-4 accent-[var(--acento)]"
+              />
+              <span>{z.label}</span>
+            </label>
           ))}
-        </select>
+        </div>
       </Campo>
 
-      {zona === "caba" && (
-        <Campo etiqueta="Barrio">
+      {zonas.includes("caba") && (
+        <Campo etiqueta="Barrio de CABA">
           <select
             name="barrio"
             className={CAMPO}

@@ -29,8 +29,16 @@ export async function guardarPerfil(
   const nombre = String(datos.get("nombre") ?? "").trim().slice(0, 60);
   const telefonoCrudo = String(datos.get("telefono") ?? "").trim();
   const salaId = String(datos.get("sala_id") ?? "").trim() || null;
+  const zonas = datos.getAll("zonas_entrega").map(String).filter(Boolean);
+  const barrio = String(datos.get("barrio") ?? "").trim() || null;
 
-  const cambios: CambioFila<"perfiles"> = { nombre, sala_id: salaId };
+  const cambios: CambioFila<"perfiles"> = {
+    nombre,
+    sala_id: salaId,
+    zonas_entrega: zonas,
+    // El barrio sólo tiene sentido si entrega en CABA.
+    barrio: zonas.includes("caba") ? barrio : null,
+  };
 
   if (telefonoCrudo) {
     const tel = normalizarTelefono(telefonoCrudo);

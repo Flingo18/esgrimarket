@@ -16,7 +16,7 @@ export type Filtros = {
  *  tiene sentido traer la descripción entera de 40 publicaciones. */
 const COLUMNAS_TARJETA =
   "id, titulo, categoria, tipo, armas_compatibles, es_electrica, talle, mano, " +
-  "marca, estado, moneda_base, monto, zona, barrio, es_oficial, unidades, creado_en, " +
+  "marca, estado, moneda_base, monto, zonas, barrio, es_oficial, unidades, creado_en, " +
   "fotos(path, orden)";
 
 export type PublicacionListada = {
@@ -32,7 +32,7 @@ export type PublicacionListada = {
   estado: string;
   moneda_base: string;
   monto: number;
-  zona: string;
+  zonas: string[];
   barrio: string | null;
   es_oficial: boolean;
   unidades: number;
@@ -51,7 +51,9 @@ export async function listarPublicaciones(
 
   if (filtros.categoria) q = q.eq("categoria", filtros.categoria);
   if (filtros.mano) q = q.in("mano", [filtros.mano, "indistinto"]);
-  if (filtros.zona) q = q.eq("zona", filtros.zona);
+  // `contains` sobre el arreglo, igual que con las armas: trae todo lo que se
+  // entregue en esa zona, aunque además se entregue en otras.
+  if (filtros.zona) q = q.contains("zonas", [filtros.zona]);
   if (filtros.electrica !== undefined) q = q.eq("es_electrica", filtros.electrica);
 
   // `contains` sobre el arreglo: trae todo lo compatible con esa arma, así

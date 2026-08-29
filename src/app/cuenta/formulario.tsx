@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { guardarPerfil } from "@/acciones/perfil";
+import { ZONAS } from "@/lib/geo";
 
 const CAMPO =
   "w-full rounded-lg border border-borde bg-fondo-elevado px-3 py-2.5 " +
@@ -15,13 +16,18 @@ export function FormularioPerfil({
   telefono,
   salaId,
   salas,
+  zonas: zonasIniciales,
+  barrio,
 }: {
   nombre: string;
   telefono: string;
   salaId: string;
   salas: Sala[];
+  zonas: string[];
+  barrio: string;
 }) {
   const [estado, accion, guardando] = useActionState(guardarPerfil, {});
+  const [zonas, setZonas] = useState<string[]>(zonasIniciales);
 
   return (
     <form action={accion} className="space-y-5">
@@ -57,6 +63,54 @@ export function FormularioPerfil({
           y sin el 15.
         </p>
       </div>
+
+      {/*
+        Vive en el perfil y no en cada publicación: alguien que entrena en
+        zona norte pero vive en Palermo entrega en los dos lados siempre, y
+        no tiene por qué repetirlo en cada aviso.
+      */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">
+          ¿Dónde entregás habitualmente?
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(ZONAS).map(([id, z]) => (
+            <label key={id} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="zonas_entrega"
+                value={id}
+                checked={zonas.includes(id)}
+                onChange={(e) =>
+                  setZonas((prev) =>
+                    e.target.checked ? [...prev, id] : prev.filter((x) => x !== id),
+                  )
+                }
+                className="size-4 accent-[var(--acento)]"
+              />
+              <span>{z.label}</span>
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-texto-suave mt-1">
+          Vienen marcadas de entrada en cada publicación nueva. Después podés
+          recortarlas si algo lo entregás en un solo lado.
+        </p>
+      </div>
+
+      {zonas.includes("caba") && (
+        <div>
+          <label htmlFor="barrio" className="block text-sm font-medium mb-1.5">
+            Tu barrio en CABA
+          </label>
+          <select id="barrio" name="barrio" defaultValue={barrio} className={CAMPO}>
+            <option value="">Sin especificar</option>
+            {ZONAS.caba.barrios.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {salas.length > 0 && (
         <div>

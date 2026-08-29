@@ -21,7 +21,7 @@ export default async function PaginaPublicar() {
     await Promise.all([
     supabase
       .from("perfiles")
-      .select("telefono_visible, limite_publicaciones")
+      .select("telefono_visible, limite_publicaciones, zonas_entrega, barrio")
       .eq("id", user.id)
       .single(),
     supabase.from("salas").select("id, nombre, barrio").order("nombre"),
@@ -52,6 +52,7 @@ export default async function PaginaPublicar() {
           telefonoGuardado={perfil?.telefono_visible ?? ""}
           salas={salas ?? []}
           puedeCargarStock={puedeStock ?? false}
+          zonasDelPerfil={perfil?.zonas_entrega ?? []}
         />
       </div>
     </div>

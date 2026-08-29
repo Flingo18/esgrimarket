@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Precio } from "@/components/precio";
 import type { Cotizacion } from "@/lib/dolar";
-import { etiquetaUbicacion } from "@/lib/geo";
+import { etiquetaZonas } from "@/lib/geo";
 import { urlFoto, type PublicacionListada } from "@/lib/publicaciones";
 import { ARMAS, ESTADOS, MANOS, metaTipo, type Categoria } from "@/lib/taxonomy";
 
@@ -82,7 +82,7 @@ export function TarjetaPublicacion({
         </div>
 
         <p className="text-xs text-texto-suave">
-          {etiquetaUbicacion(p.zona, p.barrio)}
+          {etiquetaZonas(p.zonas, p.barrio)}
           {/* Sólo si hay más de una: decir "1 disponible" en un marketplace
               de usados es ruido, ahí lo normal es que haya una sola. */}
           {p.unidades > 1 && ` · ${p.unidades} disponibles`}

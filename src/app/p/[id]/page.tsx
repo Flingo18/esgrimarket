@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { Precio } from "@/components/precio";
 import { obtenerCotizacion } from "@/lib/dolar";
-import { etiquetaUbicacion } from "@/lib/geo";
+import { etiquetaZonas } from "@/lib/geo";
 import { urlFoto } from "@/lib/publicaciones";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
@@ -20,7 +20,7 @@ import {
 const COLUMNAS =
   "id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, " +
   "empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, " +
-  "monto, unidades, zona, barrio, situacion, es_oficial, creado_en, contactos, " +
+  "monto, unidades, zonas, barrio, situacion, es_oficial, creado_en, contactos, " +
   "fotos(path, orden), salas(nombre, barrio)";
 
 async function traer(id: string) {
@@ -197,8 +197,8 @@ export default async function PaginaPublicacion({ params }: PageProps<"/p/[id]">
               valor={(p.unidades as number) > 1 ? `${p.unidades} unidades` : null}
             />
             <Dato
-              nombre="Zona"
-              valor={etiquetaUbicacion(p.zona as string, p.barrio as string | null)}
+              nombre={(p.zonas as string[]).length > 1 ? "Se entrega en" : "Zona"}
+              valor={etiquetaZonas(p.zonas as string[], p.barrio as string | null)}
             />
             <Dato
               nombre="Se entrega en"

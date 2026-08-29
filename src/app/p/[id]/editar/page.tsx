@@ -23,7 +23,7 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
     supabase
       .from("publicaciones")
       .select(
-        "id, autor_id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, monto, unidades, zona, barrio, sala_entrega_id, fotos(path, orden)",
+        "id, autor_id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, monto, unidades, zonas, barrio, sala_entrega_id, fotos(path, orden)",
       )
       .eq("id", id)
       .single(),
@@ -57,7 +57,7 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
     moneda_base: p.moneda_base,
     monto: p.monto,
     unidades: p.unidades,
-    zona: p.zona,
+    zonas: p.zonas,
     barrio: p.barrio,
     sala_entrega_id: p.sala_entrega_id,
     fotos: [...p.fotos].sort((a, b) => a.orden - b.orden).map((f) => f.path),

@@ -115,3 +115,17 @@ export function etiquetaUbicacion(zona: string, barrio?: string | null): string 
   if (barrio) return barrio;
   return ZONAS[zona as ZonaId]?.label ?? zona;
 }
+
+/**
+ * Texto para varias zonas de entrega: "Palermo y GBA Norte".
+ *
+ * El barrio se usa para la de CABA, que es donde aporta algo; para las demás
+ * alcanza el nombre de la zona.
+ */
+export function etiquetaZonas(zonas: string[], barrio?: string | null): string {
+  const nombres = zonas.map((z) =>
+    z === "caba" && barrio ? barrio : (ZONAS[z as ZonaId]?.label ?? z),
+  );
+  if (nombres.length <= 1) return nombres[0] ?? "";
+  return `${nombres.slice(0, -1).join(", ")} y ${nombres.at(-1)}`;
+}

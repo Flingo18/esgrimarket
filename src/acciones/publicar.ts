@@ -78,8 +78,10 @@ function parsear(datos: FormData): { error: EstadoPublicacion } | { campos: Camp
     return { error: { error: "Poné un precio válido.", campo: "monto" } };
   }
 
-  const zona = texto("zona");
-  if (!zona) return { error: { error: "Elegí la zona de entrega.", campo: "zona" } };
+  const zonas = datos.getAll("zonas").map(String).filter(Boolean);
+  if (zonas.length === 0) {
+    return { error: { error: "Marcá al menos una zona de entrega.", campo: "zonas" } };
+  }
 
   // El permiso real lo aplica el trigger de la base; acá sólo se valida que
   // sea un número sensato. Si alguien manda 50 sin tener plan, Postgres lo
@@ -128,7 +130,7 @@ function parsear(datos: FormData): { error: EstadoPublicacion } | { campos: Camp
       moneda_base: moneda,
       monto,
       unidades,
-      zona,
+      zonas,
       barrio: texto("barrio"),
       lat_aprox: lat ? Number(lat) : null,
       lng_aprox: lng ? Number(lng) : null,

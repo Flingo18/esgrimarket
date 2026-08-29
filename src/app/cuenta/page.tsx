@@ -19,7 +19,7 @@ export default async function PaginaCuenta() {
   const [{ data: perfil }, { data: salas }, { count: activas }] = await Promise.all([
     supabase
       .from("perfiles")
-      .select("nombre, telefono_visible, sala_id, limite_publicaciones, es_admin")
+      .select("nombre, telefono_visible, sala_id, limite_publicaciones, es_admin, zonas_entrega, barrio")
       .eq("id", user.id)
       .single(),
     supabase.from("salas").select("id, nombre, barrio").order("nombre"),
@@ -56,6 +56,8 @@ export default async function PaginaCuenta() {
           telefono={perfil?.telefono_visible ?? ""}
           salaId={perfil?.sala_id ?? ""}
           salas={salas ?? []}
+          zonas={perfil?.zonas_entrega ?? []}
+          barrio={perfil?.barrio ?? ""}
         />
       </div>
 

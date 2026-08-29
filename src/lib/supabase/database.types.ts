@@ -25,6 +25,8 @@ export type Database = {
           telefono_e164: string | null;
           telefono_visible: string | null;
           sala_id: string | null;
+          zonas_entrega: string[];
+          barrio: string | null;
           es_admin: boolean;
           limite_publicaciones: number;
           limite_hasta: string | null;
@@ -37,6 +39,8 @@ export type Database = {
           telefono_e164?: string | null;
           telefono_visible?: string | null;
           sala_id?: string | null;
+          zonas_entrega?: string[];
+          barrio?: string | null;
           es_admin?: boolean;
           limite_publicaciones?: number;
           limite_hasta?: string | null;
@@ -103,7 +107,7 @@ export type Database = {
           estado: string;
           moneda_base: string;
           monto: number;
-          zona: string;
+          zonas: string[];
           barrio: string | null;
           lat_aprox: number | null;
           lng_aprox: number | null;
@@ -134,7 +138,7 @@ export type Database = {
           estado: string;
           moneda_base: string;
           monto: number;
-          zona: string;
+          zonas: string[];
           barrio?: string | null;
           lat_aprox?: number | null;
           lng_aprox?: number | null;
