@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useActionState, useState } from "react";
 
-import { proponerSala } from "@/acciones/salas";
+import { actualizarSala, borrarSala, proponerSala } from "@/acciones/salas";
 import { ZONAS, ZONAS_AMBA, ZONAS_PROVINCIAS, type Punto } from "@/lib/geo";
 
 const CAMPO =
@@ -37,10 +37,32 @@ function Campo({
   );
 }
 
-export function FormularioSala() {
-  const [estado, accion, enviando] = useActionState(proponerSala, {});
-  const [zona, setZona] = useState("");
-  const [punto, setPunto] = useState<Punto | null>(null);
+export type SalaEditable = {
+  id: string;
+  nombre: string;
+  direccion: string | null;
+  barrio: string | null;
+  zona: string | null;
+  telefono: string | null;
+  instagram: string | null;
+  nota: string | null;
+  lat: number | null;
+  lng: number | null;
+  activa: boolean;
+};
+
+export function FormularioSala({ inicial }: { inicial?: SalaEditable }) {
+  const editando = Boolean(inicial);
+  const [estado, accion, enviando] = useActionState(
+    editando ? actualizarSala : proponerSala,
+    {},
+  );
+  const [zona, setZona] = useState(inicial?.zona ?? "");
+  const [punto, setPunto] = useState<Punto | null>(
+    inicial?.lat != null && inicial?.lng != null
+      ? { lat: inicial.lat, lng: inicial.lng }
+      : null,
+  );
 
   if (estado.ok) {
     return (
@@ -52,12 +74,25 @@ export function FormularioSala() {
 
   return (
     <form action={accion} className="space-y-5">
+      {inicial && <input type="hidden" name="id" value={inicial.id} />}
+
       <Campo etiqueta="Nombre de la sala">
-        <input name="nombre" required maxLength={80} className={CAMPO} />
+        <input
+          name="nombre"
+          required
+          maxLength={80}
+          defaultValue={inicial?.nombre ?? ""}
+          className={CAMPO}
+        />
       </Campo>
 
       <Campo etiqueta="Dirección" ayuda="Calle y altura, si la sabés.">
-        <input name="direccion" maxLength={120} className={CAMPO} />
+        <input
+          name="direccion"
+          maxLength={120}
+          defaultValue={inicial?.direccion ?? ""}
+          className={CAMPO}
+        />
       </Campo>
 
       <Campo etiqueta="Zona">
@@ -84,7 +119,7 @@ export function FormularioSala() {
 
       {zona === "caba" && (
         <Campo etiqueta="Barrio">
-          <select name="barrio" className={CAMPO} defaultValue="">
+          <select name="barrio" className={CAMPO} defaultValue={inicial?.barrio ?? ""}>
             <option value="">Sin especificar</option>
             {ZONAS.caba.barrios.map((b) => (
               <option key={b} value={b}>{b}</option>
@@ -95,10 +130,20 @@ export function FormularioSala() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <Campo etiqueta="Teléfono">
-          <input name="telefono" className={CAMPO} placeholder="Opcional" />
+          <input
+            name="telefono"
+            className={CAMPO}
+            placeholder="Opcional"
+            defaultValue={inicial?.telefono ?? ""}
+          />
         </Campo>
         <Campo etiqueta="Instagram">
-          <input name="instagram" className={CAMPO} placeholder="@sala" />
+          <input
+            name="instagram"
+            className={CAMPO}
+            placeholder="@sala"
+            defaultValue={inicial?.instagram ?? ""}
+          />
         </Campo>
       </div>
 
@@ -115,8 +160,32 @@ export function FormularioSala() {
         )}
       </Campo>
 
-      <Campo etiqueta="Algo más que quieras contarnos">
-        <textarea name="nota" rows={3} maxLength={500} className={CAMPO} />
+      {editando && (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="activa"
+            value="si"
+            defaultChecked={inicial?.activa ?? true}
+            className="size-4 accent-[var(--acento)]"
+          />
+          <span>
+            Visible en el mapa
+            <span className="text-texto-suave">
+              {" "}— destildá para ocultarla sin borrarla
+            </span>
+          </span>
+        </label>
+      )}
+
+      <Campo etiqueta={editando ? "Nota interna" : "Algo más que quieras contarnos"}>
+        <textarea
+          name="nota"
+          rows={3}
+          maxLength={500}
+          defaultValue={inicial?.nota ?? ""}
+          className={CAMPO}
+        />
       </Campo>
 
       {estado.error && (
@@ -130,7 +199,11 @@ export function FormularioSala() {
         disabled={enviando}
         className="w-full rounded-lg bg-acento text-acento-texto font-medium py-3 hover:opacity-90 disabled:opacity-50"
       >
-        {enviando ? "Enviando…" : "Proponer la sala"}
+        {enviando
+          ? "Guardando…"
+          : editando
+            ? "Guardar cambios"
+            : "Proponer la sala"}
       </button>
     </form>
   );

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { crearClienteAdmin } from "@/lib/supabase/admin";
@@ -33,6 +34,12 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
       admin.from("perfiles").select("id, nombre, rol, rol_hasta, telefono_visible"),
       admin.from("publicaciones").select("id", { count: "exact", head: true }),
     ]);
+
+  const { data: todasLasSalas } = await admin
+    .from("salas")
+    .select("id, nombre, barrio, zona, lat, activa, situacion")
+    .eq("situacion", "aprobada")
+    .order("nombre");
 
   const { data: salasPendientes } = await admin
     .from("salas")
@@ -77,7 +84,11 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         <p className="mt-4 rounded-lg border border-precio/40 bg-precio/10 px-3 py-2 text-sm text-precio">
           {resultadoSala === "aprobada"
             ? "Sala aprobada. Ya aparece en el mapa."
-            : "Sala rechazada. No se publica."}
+            : resultadoSala === "guardada"
+              ? "Cambios guardados."
+              : resultadoSala === "borrada"
+                ? "Sala borrada."
+                : "Sala rechazada. No se publica."}
         </p>
       )}
 
@@ -114,6 +125,39 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
           </ul>
         </>
       )}
+
+      <div className="mt-10 flex items-baseline justify-between gap-4">
+        <h2 className="text-lg font-semibold">
+          Salas ({todasLasSalas?.length ?? 0})
+        </h2>
+        <Link href="/salas/proponer" className="text-sm text-acento underline">
+          Agregar una
+        </Link>
+      </div>
+
+      <ul className="mt-3 grid sm:grid-cols-2 gap-2">
+        {(todasLasSalas ?? []).map((s) => (
+          <li
+            key={s.id}
+            className="rounded-xl border border-borde bg-fondo-elevado p-3 flex items-center gap-3"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="font-medium truncate">{s.nombre}</p>
+              <p className="text-xs text-texto-suave">
+                {s.barrio ?? "Sin barrio"}
+                {!s.lat && " · sin punto en el mapa"}
+                {!s.activa && " · oculta"}
+              </p>
+            </div>
+            <Link
+              href={`/admin/salas/${s.id}`}
+              className="shrink-0 rounded-lg border border-borde px-3 py-1.5 text-sm hover:border-acento"
+            >
+              Editar
+            </Link>
+          </li>
+        ))}
+      </ul>
 
       <h2 className="mt-10 text-lg font-semibold">Cuentas</h2>
       <p className="text-sm text-texto-suave mt-1">

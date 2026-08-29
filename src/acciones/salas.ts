@@ -67,6 +67,82 @@ export async function proponerSala(
   return { ok: "Listo, la propuesta quedó enviada. La revisamos y la publicamos." };
 }
 
+/**
+ * Edita una sala existente. Sólo admins.
+ *
+ * Sirve tanto para corregir lo que carga la comunidad como para completar lo
+ * que falta: una sala sin coordenada existe en la lista pero no se dibuja en
+ * el mapa hasta que alguien la ubica.
+ */
+export async function actualizarSala(
+  _previo: EstadoSala,
+  datos: FormData,
+): Promise<EstadoSala> {
+  const supabase = await crearClienteServidor();
+  const { data: esAdmin } = await supabase.rpc("es_admin");
+  if (!esAdmin) return { error: "No tenés permiso." };
+
+  const id = String(datos.get("id") ?? "");
+  if (!id) return { error: "Falta la sala." };
+
+  const texto = (k: string) => {
+    const v = datos.get(k);
+    return typeof v === "string" && v.trim() ? v.trim() : null;
+  };
+
+  const nombre = texto("nombre");
+  if (!nombre || nombre.length < 3) return { error: "Poné el nombre de la sala." };
+
+  const zona = texto("zona");
+  if (!zona || !(zona in ZONAS)) return { error: "Elegí la zona." };
+
+  const lat = texto("lat");
+  const lng = texto("lng");
+
+  const admin = crearClienteAdmin();
+  const { error } = await admin
+    .from("salas")
+    .update({
+      nombre,
+      direccion: texto("direccion"),
+      barrio: texto("barrio"),
+      zona,
+      telefono: texto("telefono"),
+      instagram: texto("instagram"),
+      nota: texto("nota"),
+      lat: lat ? Number(lat) : null,
+      lng: lng ? Number(lng) : null,
+      activa: datos.get("activa") === "si",
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error actualizando sala:", error.message);
+    return { error: "No pudimos guardar los cambios." };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/mapa");
+  redirect("/admin?sala=guardada");
+}
+
+/** Borra una sala. Las publicaciones que la usaban quedan sin punto de entrega. */
+export async function borrarSala(datos: FormData) {
+  const supabase = await crearClienteServidor();
+  const { data: esAdmin } = await supabase.rpc("es_admin");
+  if (!esAdmin) return;
+
+  const id = String(datos.get("id") ?? "");
+  if (!id) return;
+
+  const admin = crearClienteAdmin();
+  await admin.from("salas").delete().eq("id", id);
+
+  revalidatePath("/admin");
+  revalidatePath("/mapa");
+  redirect("/admin?sala=borrada");
+}
+
 /** Aprueba o rechaza una sala propuesta. Sólo admins. */
 export async function moderarSala(
   _previo: EstadoSala,
