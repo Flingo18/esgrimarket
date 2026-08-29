@@ -78,6 +78,7 @@ export type PublicacionEditable = {
   estado: string;
   moneda_base: string;
   monto: number;
+  unidades: number;
   zona: string;
   barrio: string | null;
   sala_entrega_id: string | null;
@@ -88,10 +89,13 @@ export function FormularioPublicar({
   telefonoGuardado,
   salas,
   inicial,
+  puedeCargarStock = false,
 }: {
   telefonoGuardado: string;
   salas: Sala[];
   inicial?: PublicacionEditable;
+  /** Admins y cuentas pagas. El permiso real lo aplica la base. */
+  puedeCargarStock?: boolean;
 }) {
   const editando = Boolean(inicial);
   const [estado, accion, enviando] = useActionState(
@@ -438,6 +442,27 @@ export function FormularioPublicar({
           />
         </div>
       </Campo>
+
+      {/*
+        El campo sólo existe para quien puede usarlo. A alguien que vende su
+        careta usada preguntarle "¿cuántas unidades?" no tiene sentido, y la
+        base lo rechazaría igual.
+      */}
+      {puedeCargarStock && (
+        <Campo
+          etiqueta="Unidades disponibles"
+          ayuda="Cuántas tenés de este mismo artículo."
+        >
+          <input
+            name="unidades"
+            type="number"
+            min={1}
+            max={999}
+            defaultValue={inicial?.unidades ?? 1}
+            className={`${CAMPO} w-32`}
+          />
+        </Campo>
+      )}
 
       {/* ─────────── Fotos ─────────── */}
 

@@ -16,7 +16,7 @@ export type Filtros = {
  *  tiene sentido traer la descripción entera de 40 publicaciones. */
 const COLUMNAS_TARJETA =
   "id, titulo, categoria, tipo, armas_compatibles, es_electrica, talle, mano, " +
-  "marca, estado, moneda_base, monto, zona, barrio, es_oficial, creado_en, " +
+  "marca, estado, moneda_base, monto, zona, barrio, es_oficial, unidades, creado_en, " +
   "fotos(path, orden)";
 
 export type PublicacionListada = {
@@ -35,6 +35,7 @@ export type PublicacionListada = {
   zona: string;
   barrio: string | null;
   es_oficial: boolean;
+  unidades: number;
   creado_en: string;
   fotos: { path: string; orden: number }[];
 };

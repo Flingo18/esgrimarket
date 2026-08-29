@@ -110,6 +110,7 @@ export type Database = {
           sala_entrega_id: string | null;
           situacion: string;
           es_oficial: boolean;
+          unidades: number;
           vence_en: string;
           contactos: number;
           creado_en: string;
@@ -140,6 +141,7 @@ export type Database = {
           sala_entrega_id?: string | null;
           situacion?: string;
           es_oficial?: boolean;
+          unidades?: number;
           vence_en?: string;
           contactos?: number;
           creado_en?: string;
@@ -220,6 +222,8 @@ export type Database = {
       /** Devuelve el teléfono de a uno; el resto del tiempo no se expone. */
       contacto_whatsapp: { Args: { pub_id: string }; Returns: string | null };
       es_admin: { Args: Record<never, never>; Returns: boolean };
+      /** Admins y cuentas pagas: son los únicos que pueden publicar con stock. */
+      puede_cargar_stock: { Args: Record<never, never>; Returns: boolean };
       /** Sólo la llama el cron, con la service role key. */
       vencer_publicaciones: { Args: Record<never, never>; Returns: number };
     };

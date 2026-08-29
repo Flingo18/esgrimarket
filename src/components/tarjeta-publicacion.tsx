@@ -83,6 +83,9 @@ export function TarjetaPublicacion({
 
         <p className="text-xs text-texto-suave">
           {etiquetaUbicacion(p.zona, p.barrio)}
+          {/* Sólo si hay más de una: decir "1 disponible" en un marketplace
+              de usados es ruido, ahí lo normal es que haya una sola. */}
+          {p.unidades > 1 && ` · ${p.unidades} disponibles`}
         </p>
       </div>
     </Link>

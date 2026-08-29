@@ -20,7 +20,7 @@ import {
 const COLUMNAS =
   "id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, " +
   "empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, " +
-  "monto, zona, barrio, situacion, es_oficial, creado_en, contactos, " +
+  "monto, unidades, zona, barrio, situacion, es_oficial, creado_en, contactos, " +
   "fotos(path, orden), salas(nombre, barrio)";
 
 async function traer(id: string) {
@@ -191,6 +191,10 @@ export default async function PaginaPublicacion({ params }: PageProps<"/p/[id]">
             <Dato
               nombre="Estado"
               valor={ESTADOS[p.estado as keyof typeof ESTADOS]}
+            />
+            <Dato
+              nombre="Disponibles"
+              valor={(p.unidades as number) > 1 ? `${p.unidades} unidades` : null}
             />
             <Dato
               nombre="Zona"

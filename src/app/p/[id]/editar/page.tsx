@@ -23,13 +23,15 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
     supabase
       .from("publicaciones")
       .select(
-        "id, autor_id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, monto, zona, barrio, sala_entrega_id, fotos(path, orden)",
+        "id, autor_id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, monto, unidades, zona, barrio, sala_entrega_id, fotos(path, orden)",
       )
       .eq("id", id)
       .single(),
     supabase.from("perfiles").select("telefono_visible").eq("id", user.id).single(),
     supabase.from("salas").select("id, nombre, barrio").order("nombre"),
   ]);
+
+  const { data: puedeStock } = await supabase.rpc("puede_cargar_stock");
 
   if (!p) notFound();
 
@@ -54,6 +56,7 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
     estado: p.estado,
     moneda_base: p.moneda_base,
     monto: p.monto,
+    unidades: p.unidades,
     zona: p.zona,
     barrio: p.barrio,
     sala_entrega_id: p.sala_entrega_id,
@@ -74,6 +77,7 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
           telefonoGuardado={perfil?.telefono_visible ?? ""}
           salas={salas ?? []}
           inicial={inicial}
+          puedeCargarStock={puedeStock ?? false}
         />
       </div>
     </div>

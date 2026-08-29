@@ -81,6 +81,14 @@ function parsear(datos: FormData): { error: EstadoPublicacion } | { campos: Camp
   const zona = texto("zona");
   if (!zona) return { error: { error: "Elegí la zona de entrega.", campo: "zona" } };
 
+  // El permiso real lo aplica el trigger de la base; acá sólo se valida que
+  // sea un número sensato. Si alguien manda 50 sin tener plan, Postgres lo
+  // rechaza con un mensaje que explica por qué.
+  const unidades = Math.trunc(Number(texto("unidades") ?? "1"));
+  if (!Number.isFinite(unidades) || unidades < 1 || unidades > 999) {
+    return { error: { error: "Las unidades van entre 1 y 999.", campo: "unidades" } };
+  }
+
   const anioTexto = texto("anio");
   const anio = anioTexto ? Number(anioTexto) : null;
   if (anio !== null && (anio < ANIO_MINIMO || anio > anioMaximo())) {
@@ -119,6 +127,7 @@ function parsear(datos: FormData): { error: EstadoPublicacion } | { campos: Camp
       estado,
       moneda_base: moneda,
       monto,
+      unidades,
       zona,
       barrio: texto("barrio"),
       lat_aprox: lat ? Number(lat) : null,

@@ -17,7 +17,8 @@ export default async function PaginaPublicar() {
 
   // El teléfono se pide una sola vez: si ya está, el formulario lo muestra
   // cargado y la persona no lo vuelve a escribir en cada publicación.
-  const [{ data: perfil }, { data: salas }, { count: activas }] = await Promise.all([
+  const [{ data: perfil }, { data: salas }, { count: activas }, { data: puedeStock }] =
+    await Promise.all([
     supabase
       .from("perfiles")
       .select("telefono_visible, limite_publicaciones")
@@ -29,6 +30,9 @@ export default async function PaginaPublicar() {
       .select("id", { count: "exact", head: true })
       .eq("autor_id", user.id)
       .eq("situacion", "activa"),
+    // Lo decide la base, no la interfaz: acá sólo se pregunta para saber si
+    // mostrar el campo.
+    supabase.rpc("puede_cargar_stock"),
   ]);
 
   const limite = perfil?.limite_publicaciones ?? 5;
@@ -47,6 +51,7 @@ export default async function PaginaPublicar() {
         <FormularioPublicar
           telefonoGuardado={perfil?.telefono_visible ?? ""}
           salas={salas ?? []}
+          puedeCargarStock={puedeStock ?? false}
         />
       </div>
     </div>
