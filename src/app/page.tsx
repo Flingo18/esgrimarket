@@ -36,10 +36,11 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Equipamiento de esgrima
+          Equipamiento de esgrima usado en Buenos Aires
         </h1>
         <p className="text-texto-suave mt-1">
-          Comprá y vendé entre gente de la comunidad. El contacto es directo por WhatsApp.
+          Comprá y vendé entre gente de la comunidad: floretes, espadas, sables,
+          caretas, chaquetillas y cables. El contacto es directo por WhatsApp.
         </p>
       </div>
 

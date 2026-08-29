@@ -480,7 +480,10 @@ export function FormularioPublicar({
 
       {/* ─────────── Fotos ─────────── */}
 
-      <Campo etiqueta="Fotos" ayuda="Hasta 6. Se achican solas antes de subirse.">
+      <Campo
+        etiqueta={editando ? "Fotos" : "Fotos (obligatorio)"}
+        ayuda="Hasta 6. Se achican solas antes de subirse."
+      >
         <input
           type="file"
           accept="image/*"
@@ -490,11 +493,18 @@ export function FormularioPublicar({
           className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-acento-suave file:px-3 file:py-2 file:text-sm"
         />
         {subiendo && <p className="text-sm text-texto-suave mt-2">Subiendo…</p>}
-        {fotos.length > 0 && (
-          <p className="text-sm text-texto-suave mt-2">
+        {fotos.length > 0 ? (
+          <p className="text-sm text-precio mt-2">
             {fotos.length} foto{fotos.length > 1 ? "s" : ""} lista
             {fotos.length > 1 ? "s" : ""}.
           </p>
+        ) : (
+          !editando && (
+            <p className="text-sm text-texto-suave mt-2">
+              Hace falta al menos una. Una publicación sin foto casi no recibe
+              consultas.
+            </p>
+          )
         )}
         {fotos.map((f) => (
           <input key={f} type="hidden" name="fotos" value={f} />
@@ -653,7 +663,7 @@ export function FormularioPublicar({
 
       <button
         type="submit"
-        disabled={enviando || subiendo}
+        disabled={enviando || subiendo || (!editando && fotos.length === 0)}
         className="w-full rounded-lg bg-acento text-acento-texto font-medium py-3 hover:opacity-90 disabled:opacity-50"
       >
         {enviando
@@ -662,7 +672,9 @@ export function FormularioPublicar({
             : "Publicando…"
           : editando
             ? "Guardar cambios"
-            : "Publicar"}
+            : fotos.length === 0
+              ? "Subí una foto para publicar"
+              : "Publicar"}
       </button>
     </form>
   );

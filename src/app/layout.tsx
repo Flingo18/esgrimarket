@@ -12,14 +12,34 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+const DESCRIPCION =
+  "Comprá y vendé equipamiento de esgrima usado en Buenos Aires: floretes, " +
+  "espadas, sables, caretas, chaquetillas y cables. Además, el calendario de " +
+  "torneos de la FAE y la FECBA y el mapa de salas.";
+
 export const metadata: Metadata = {
   title: {
     default: "Esgrimarket — Compra y venta de equipamiento de esgrima",
     template: "%s · Esgrimarket",
   },
-  description:
-    "Marketplace de la comunidad de esgrima de Buenos Aires. Publicá lo que no usás, encontrá lo que buscás y coordiná por WhatsApp.",
+  description: DESCRIPCION,
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  // Sin esto, cada URL con filtros distintos parece una página nueva y
+  // compiten entre sí en los resultados.
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "es_AR",
+    siteName: "Esgrimarket",
+    title: "Esgrimarket — Equipamiento de esgrima",
+    description: DESCRIPCION,
+  },
+  twitter: { card: "summary_large_image" },
+  keywords: [
+    "esgrima", "equipamiento de esgrima", "florete", "espada", "sable",
+    "careta de esgrima", "chaquetilla eléctrica", "esgrima Buenos Aires",
+    "esgrima usada", "torneos de esgrima", "salas de esgrima",
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

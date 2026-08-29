@@ -81,8 +81,35 @@ export default async function PaginaPublicacion({ params }: PageProps<"/p/[id]">
   const sala = p.salas as { nombre: string; barrio: string | null } | null;
   const vendida = p.situacion !== "activa";
 
+  // Datos estructurados: sin esto Google ve una página cualquiera; con esto
+  // puede mostrarla como un producto, con precio y disponibilidad.
+  const datosEstructurados = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.titulo,
+    description: p.descripcion || `${meta?.label ?? "Equipamiento de esgrima"} en venta.`,
+    image: fotos.map((f) => urlFoto(f.path)),
+    brand: p.marca ? { "@type": "Brand", name: p.marca } : undefined,
+    offers: {
+      "@type": "Offer",
+      price: p.monto,
+      priceCurrency: p.moneda_base,
+      availability: vendida
+        ? "https://schema.org/SoldOut"
+        : "https://schema.org/InStock",
+      itemCondition:
+        p.estado === "nuevo"
+          ? "https://schema.org/NewCondition"
+          : "https://schema.org/UsedCondition",
+    },
+  };
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(datosEstructurados) }}
+      />
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-3">
           {fotos.length > 0 ? (

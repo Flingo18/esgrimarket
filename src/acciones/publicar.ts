@@ -186,6 +186,13 @@ export async function crearPublicacion(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Tenés que ingresar para publicar." };
 
+  // Sin foto una publicación no se mira: la gente saltea las tarjetas vacías.
+  // Se exige al crear y no al editar, para no dejar trabadas las que ya están.
+  const fotosNuevas = datos.getAll("fotos").map(String).filter(Boolean);
+  if (fotosNuevas.length === 0) {
+    return { error: "Subí al menos una foto: sin foto no se puede publicar.", campo: "fotos" };
+  }
+
   const parsed = parsear(datos);
   if ("error" in parsed) return parsed.error;
 
@@ -210,12 +217,11 @@ export async function crearPublicacion(
     return { error: "No pudimos publicar. Probá de nuevo." };
   }
 
-  const rutas = datos.getAll("fotos").map(String).filter(Boolean);
-  if (rutas.length > 0) {
-    await supabase
-      .from("fotos")
-      .insert(rutas.map((path, orden) => ({ publicacion_id: creada.id, path, orden })));
-  }
+  await supabase
+    .from("fotos")
+    .insert(
+      fotosNuevas.map((path, orden) => ({ publicacion_id: creada.id, path, orden })),
+    );
 
   // Los avisos van después de responder: publicar no puede quedar esperando a
   // que salgan los mails, ni fallar si el servidor de correo no contesta.
