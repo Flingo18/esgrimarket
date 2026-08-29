@@ -139,16 +139,20 @@ export function FormularioPublicar({
 
       const nuevas: string[] = [];
       for (const archivo of Array.from(archivos).slice(0, 6 - fotos.length)) {
-        // Las fotos de celular pesan 4 MB. Sin comprimir, el bucket gratuito
-        // de 1 GB se llena con 250 publicaciones.
+        // Las fotos de celular pesan 4 MB o más. Los topes están puestos
+        // mirando lo que la página realmente muestra: las tarjetas se ven a
+        // unos 400 px y el detalle a 800, así que 1400 deja margen para
+        // pantallas retina y nada más. Subir de ahí gasta el bucket gratuito
+        // en píxeles que nadie ve.
         const chico = await comprimir(archivo, {
-          maxSizeMB: 0.5,
-          maxWidthOrHeight: 1600,
+          maxSizeMB: 0.25,
+          maxWidthOrHeight: 1400,
           useWebWorker: true,
           // Sin esto la librería conserva el formato original: un PNG sigue
           // siendo PNG, pesa varias veces más que un JPEG para la misma foto,
           // y el archivo termina llamándose .jpg sin serlo.
           fileType: "image/jpeg",
+          initialQuality: 0.82,
         });
 
         const ruta = `${user.id}/${crypto.randomUUID()}.jpg`;
