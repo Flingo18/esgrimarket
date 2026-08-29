@@ -74,6 +74,10 @@ export default async function PaginaCuenta() {
         <Link href="/mis-publicaciones" className="text-acento underline">
           Ver mis publicaciones
         </Link>
+        {" · "}
+        <Link href="/busquedas" className="text-acento underline">
+          Lo que estoy buscando
+        </Link>
       </p>
 
       <div className="mt-12 pt-6 border-t border-borde">

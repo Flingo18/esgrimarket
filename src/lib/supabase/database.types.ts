@@ -256,6 +256,40 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["torneos"]["Insert"]>;
         Relationships: [];
       };
+      busquedas: {
+        Row: {
+          id: string;
+          usuario_id: string;
+          texto: string | null;
+          categoria: string | null;
+          tipo: string | null;
+          arma: string | null;
+          mano: string | null;
+          talle: string | null;
+          precio_max: number | null;
+          moneda: string;
+          activa: boolean;
+          avisos: number;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          usuario_id: string;
+          texto?: string | null;
+          categoria?: string | null;
+          tipo?: string | null;
+          arma?: string | null;
+          mano?: string | null;
+          talle?: string | null;
+          precio_max?: number | null;
+          moneda?: string;
+          activa?: boolean;
+          avisos?: number;
+          creado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["busquedas"]["Insert"]>;
+        Relationships: [];
+      };
       cotizacion_cache: {
         Row: { id: boolean; venta: number; fuente: string; actualizado: string };
         Insert: { id?: boolean; venta: number; fuente: string; actualizado?: string };
@@ -277,6 +311,12 @@ export type Database = {
       vencer_publicaciones: { Args: Record<never, never>; Returns: number };
       /** Sólo la llama el cron, con la service role key. */
       fotos_huerfanas: { Args: { horas: number }; Returns: { ruta: string }[] };
+      /** A quién avisarle por una publicación nueva. Sólo service role. */
+      sumar_aviso: { Args: { busqueda: string }; Returns: undefined };
+      destinatarios_de_aviso: {
+        Args: { pub_id: string };
+        Returns: { busqueda_id: string; email: string; texto: string | null }[];
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;

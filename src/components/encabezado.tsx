@@ -37,6 +37,12 @@ export async function Encabezado() {
         {user ? (
           <>
             <Link
+              href="/busquedas"
+              className="text-sm text-texto-suave hover:text-texto hidden sm:block"
+            >
+              Busco
+            </Link>
+            <Link
               href="/mis-publicaciones"
               className="text-sm text-texto-suave hover:text-texto hidden sm:block"
             >

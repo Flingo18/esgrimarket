@@ -2,6 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+
+import { avisarCoincidencia } from "@/lib/avisos";
+import { crearClienteAdmin } from "@/lib/supabase/admin";
+import { formatearARS, formatearUSD } from "@/lib/dolar";
 
 import type { NuevaFila } from "@/lib/supabase/database.types";
 import { crearClienteServidor } from "@/lib/supabase/server";
@@ -212,9 +217,61 @@ export async function crearPublicacion(
       .insert(rutas.map((path, orden) => ({ publicacion_id: creada.id, path, orden })));
   }
 
+  // Los avisos van después de responder: publicar no puede quedar esperando a
+  // que salgan los mails, ni fallar si el servidor de correo no contesta.
+  after(async () => {
+    await avisarACoincidencias(
+      creada.id,
+      parsed.campos.titulo,
+      parsed.campos.moneda_base,
+      parsed.campos.monto,
+    );
+  });
+
   revalidatePath("/");
   revalidatePath("/mis-publicaciones");
   redirect(`/p/${creada.id}`);
+}
+
+/**
+ * Avisa a quienes tenían guardada una búsqueda que coincide.
+ *
+ * Corre con la clave de servicio porque tiene que leer búsquedas ajenas, cosa
+ * que ninguna sesión puede hacer. Los errores se registran y nada más: un
+ * aviso que no sale no puede afectar a la publicación, que ya está creada.
+ */
+async function avisarACoincidencias(
+  id: string,
+  titulo: string,
+  moneda: string,
+  monto: number,
+) {
+  try {
+    const admin = crearClienteAdmin();
+    const { data: destinatarios, error } = await admin.rpc("destinatarios_de_aviso", {
+      pub_id: id,
+    });
+
+    if (error || !destinatarios?.length) return;
+
+    const url = `${process.env.NEXT_PUBLIC_SITE_URL}/p/${id}`;
+    const precio = moneda === "USD" ? formatearUSD(monto) : formatearARS(monto);
+
+    for (const d of destinatarios) {
+      const salio = await avisarCoincidencia({
+        para: d.email,
+        queBuscaba: d.texto,
+        titulo,
+        precio,
+        url,
+      });
+      if (salio) {
+        await admin.rpc("sumar_aviso", { busqueda: d.busqueda_id });
+      }
+    }
+  } catch (e) {
+    console.error("Error avisando coincidencias:", e);
+  }
 }
 
 export async function actualizarPublicacion(
