@@ -10,6 +10,7 @@ import type { Database } from "@/lib/supabase/database.types";
  * 1. Vencer las publicaciones que pasaron los 45 días.
  * 2. Guardar la cotización del día como respaldo, para que el listado siga
  *    mostrando precios en pesos si las dos APIs se caen.
+ * 3. Borrar las fotos que quedaron en el bucket sin publicación que las use.
  *
  * Usa la service role key porque `vencer_publicaciones()` está revocada para
  * anon y authenticated: no tiene por qué poder llamarla cualquiera.
@@ -44,6 +45,25 @@ export async function GET(request: NextRequest) {
     resultado.cotizacion = error ? `error: ${error.message}` : cotizacion.venta;
   } else {
     resultado.cotizacion = "las dos APIs fallaron, se conserva el valor anterior";
+  }
+
+  // Fotos huérfanas: el formulario sube la imagen antes de crear la
+  // publicación, así que abandonar el formulario deja el archivo colgado.
+  const { data: huerfanas, error: errorHuerfanas } = await admin.rpc(
+    "fotos_huerfanas",
+    { horas: 24 },
+  );
+
+  if (errorHuerfanas) {
+    resultado.fotos_huerfanas = `error: ${errorHuerfanas.message}`;
+  } else {
+    const rutas = (huerfanas ?? []).map((f) => f.ruta);
+    if (rutas.length > 0) {
+      const { error } = await admin.storage.from("fotos").remove(rutas);
+      resultado.fotos_huerfanas = error ? `error: ${error.message}` : rutas.length;
+    } else {
+      resultado.fotos_huerfanas = 0;
+    }
   }
 
   return Response.json(resultado);

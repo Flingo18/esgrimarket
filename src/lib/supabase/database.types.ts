@@ -239,6 +239,8 @@ export type Database = {
       puede_cargar_stock: { Args: Record<never, never>; Returns: boolean };
       /** Sólo la llama el cron, con la service role key. */
       vencer_publicaciones: { Args: Record<never, never>; Returns: number };
+      /** Sólo la llama el cron, con la service role key. */
+      fotos_huerfanas: { Args: { horas: number }; Returns: { ruta: string }[] };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;

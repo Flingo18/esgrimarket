@@ -145,6 +145,10 @@ export function FormularioPublicar({
           maxSizeMB: 0.5,
           maxWidthOrHeight: 1600,
           useWebWorker: true,
+          // Sin esto la librería conserva el formato original: un PNG sigue
+          // siendo PNG, pesa varias veces más que un JPEG para la misma foto,
+          // y el archivo termina llamándose .jpg sin serlo.
+          fileType: "image/jpeg",
         });
 
         const ruta = `${user.id}/${crypto.randomUUID()}.jpg`;
