@@ -224,13 +224,13 @@ export type Database = {
         Row: {
           id: string;
           nombre: string;
-          tipo: string;
+          federacion: string | null;
+          contacto_inscripcion: string | null;
           fecha_inicio: string | null;
           fecha_fin: string | null;
           cierre_inscripcion: string | null;
           lugar: string | null;
           zona: string | null;
-          url_inscripcion: string | null;
           notas: string | null;
           situacion: string;
           propuesto_por: string | null;
@@ -240,13 +240,13 @@ export type Database = {
         Insert: {
           id?: string;
           nombre: string;
-          tipo?: string;
+          federacion?: string | null;
+          contacto_inscripcion?: string | null;
           fecha_inicio?: string | null;
           fecha_fin?: string | null;
           cierre_inscripcion?: string | null;
           lugar?: string | null;
           zona?: string | null;
-          url_inscripcion?: string | null;
           notas?: string | null;
           situacion?: string;
           propuesto_por?: string | null;

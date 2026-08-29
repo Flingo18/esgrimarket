@@ -1,22 +1,40 @@
 /**
- * Tipos de torneo. Salen de cómo los organiza la federación, no de una
- * clasificación inventada: quien busca sabe si le sirve un FECBA o un FAE.
+ * Federaciones conocidas, sólo como sugerencia.
+ *
+ * El campo es texto libre a propósito: además de FAE y FECBA están las
+ * provinciales, y van a ir apareciendo otras. El filtro se arma con las que
+ * realmente existen en la base, así que agregar una es cargar un torneo y
+ * nada más — no hay que tocar código.
  */
-export const TIPOS_TORNEO = {
-  fae: "FAE — Nacional",
-  fecba: "FECBA — Metropolitano",
-  internacional: "Internacional",
-  otro: "Otro",
-} as const;
+export const FEDERACIONES_SUGERIDAS = [
+  "FAE",
+  "FECBA",
+  "Internacional",
+  "Federación Santafesina",
+  "Federación Cordobesa",
+  "Federación Mendocina",
+] as const;
 
-export type TipoTorneo = keyof typeof TIPOS_TORNEO;
-
-export const COLOR_TIPO: Record<string, string> = {
-  fae: "bg-acento-suave text-acento",
-  fecba: "bg-precio/15 text-precio",
-  internacional: "bg-fondo-sutil text-texto-suave",
-  otro: "bg-fondo-sutil text-texto-suave",
+/** Colores por federación, con un gris de reserva para las que no estén acá. */
+const COLORES: Record<string, string> = {
+  FAE: "bg-acento-suave text-acento",
+  FECBA: "bg-precio/15 text-precio",
+  Internacional: "bg-fondo-sutil text-texto-suave",
 };
+
+const PUNTOS: Record<string, string> = {
+  FAE: "var(--acento)",
+  FECBA: "var(--precio)",
+  Internacional: "var(--texto-suave)",
+};
+
+export function colorFederacion(f?: string | null): string {
+  return (f && COLORES[f]) || "bg-fondo-sutil text-texto-suave";
+}
+
+export function colorBarra(f?: string | null): string {
+  return (f && PUNTOS[f]) || "var(--texto-suave)";
+}
 
 const MESES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -30,9 +48,14 @@ const MESES = [
  * día para atrás: un torneo del 14 se muestra el 13. Es un clásico y sólo se
  * nota cuando alguien llega un día tarde.
  */
-function partes(iso: string) {
+export function partes(iso: string) {
   const [a, m, d] = iso.split("-").map(Number);
   return { anio: a, mes: m - 1, dia: d };
+}
+
+export function aFecha(iso: string): Date {
+  const { anio, mes, dia } = partes(iso);
+  return new Date(anio, mes, dia);
 }
 
 export function mesDe(iso: string): string {
@@ -56,9 +79,69 @@ export function rangoDeFechas(inicio: string, fin?: string | null): string {
 }
 
 export function diasHasta(iso: string): number {
-  const { anio, mes, dia } = partes(iso);
-  const objetivo = new Date(anio, mes, dia);
+  const objetivo = aFecha(iso);
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
   return Math.round((objetivo.getTime() - hoy.getTime()) / 86_400_000);
+}
+
+/** "hace 3 días", para que se vea qué tan fresca es la información. */
+export function haceCuanto(iso: string): string {
+  const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (dias <= 0) return "hoy";
+  if (dias === 1) return "ayer";
+  if (dias < 30) return `hace ${dias} días`;
+  const meses = Math.floor(dias / 30);
+  return meses === 1 ? "hace un mes" : `hace ${meses} meses`;
+}
+
+/* ─────────────────── Contacto para inscribirse ─────────────────── */
+
+export type Contacto =
+  | { tipo: "link"; href: string; texto: string }
+  | { tipo: "mail"; href: string; texto: string }
+  | { tipo: "whatsapp"; href: string; texto: string }
+  | null;
+
+/**
+ * Decide qué hacer con el contacto según lo que sea.
+ *
+ * El campo es uno solo porque para quien carga el torneo también es uno solo:
+ * "dónde anotarse". Pegue un link, un mail o un teléfono, la app resuelve.
+ */
+export function interpretarContacto(valor?: string | null): Contacto {
+  if (!valor) return null;
+  const v = valor.trim();
+
+  if (/^https?:\/\//i.test(v)) {
+    return { tipo: "link", href: v, texto: "Anotarse" };
+  }
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+    return { tipo: "mail", href: `mailto:${v}`, texto: `Escribir a ${v}` };
+  }
+
+  const digitos = v.replace(/\D/g, "");
+  if (digitos.length >= 8) {
+    // Mismo criterio que en el resto de la app: Argentina móvil es 54 9 + 10.
+    let d = digitos;
+    if (d.startsWith("54")) d = d.slice(2);
+    if (d.length > 10 && d.startsWith("9")) d = d.slice(1);
+    if (d.startsWith("0")) d = d.slice(1);
+    if (d.length > 10) {
+      for (const i of [2, 3, 4]) {
+        if (d.slice(i, i + 2) === "15" && d.length - 2 === 10) {
+          d = d.slice(0, i) + d.slice(i + 2);
+          break;
+        }
+      }
+    }
+    return {
+      tipo: "whatsapp",
+      href: `https://wa.me/549${d}`,
+      texto: `Escribir por WhatsApp al ${v}`,
+    };
+  }
+
+  // No parece ninguna de las tres: se muestra tal cual, sin inventar una acción.
+  return null;
 }

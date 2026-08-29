@@ -3,27 +3,28 @@
 import { useActionState } from "react";
 
 import { moderarTorneo } from "@/acciones/torneos";
-import { TIPOS_TORNEO, rangoDeFechas } from "@/lib/torneos";
+import { interpretarContacto, rangoDeFechas } from "@/lib/torneos";
 
 export type TorneoPendiente = {
   id: string;
   nombre: string;
-  tipo: string;
+  federacion: string | null;
+  contacto_inscripcion: string | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
   cierre_inscripcion: string | null;
   lugar: string | null;
-  url_inscripcion: string | null;
   notas: string | null;
 };
 
 export function FilaTorneoPendiente({ torneo: t }: { torneo: TorneoPendiente }) {
   const [estado, accion, guardando] = useActionState(moderarTorneo, {});
+  const contacto = interpretarContacto(t.contacto_inscripcion);
 
   return (
     <li className="rounded-xl border border-borde bg-fondo-elevado p-3">
       <p className="text-xs text-texto-suave">
-        {TIPOS_TORNEO[t.tipo as keyof typeof TIPOS_TORNEO]}
+        {t.federacion ?? "Sin federación"}
         {t.fecha_inicio
           ? ` · ${rangoDeFechas(t.fecha_inicio, t.fecha_fin)}`
           : " · sin fecha"}
@@ -36,15 +37,11 @@ export function FilaTorneoPendiente({ torneo: t }: { torneo: TorneoPendiente }) 
         </p>
       )}
       {t.notas && <p className="text-sm italic text-texto-suave mt-1">“{t.notas}”</p>}
-      {t.url_inscripcion && (
-        <a
-          href={t.url_inscripcion}
-          target="_blank"
-          rel="noreferrer"
-          className="text-sm text-acento underline"
-        >
-          Ver el link de inscripción
-        </a>
+      {t.contacto_inscripcion && (
+        <p className="text-sm text-texto-suave">
+          Inscripción: {t.contacto_inscripcion}
+          {contacto ? ` (${contacto.tipo})` : " — no se reconoce como link, mail ni teléfono"}
+        </p>
       )}
 
       {estado?.error && <p className="text-sm text-alerta mt-1">{estado.error}</p>}

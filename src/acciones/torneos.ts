@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { TIPOS_TORNEO } from "@/lib/torneos";
 
 export type EstadoTorneo = { error?: string; ok?: string };
 
@@ -28,28 +27,20 @@ export async function proponerTorneo(
   const nombre = texto("nombre");
   if (!nombre || nombre.length < 3) return { error: "Poné el nombre del torneo." };
 
-  const tipo = texto("tipo") ?? "otro";
-  if (!(tipo in TIPOS_TORNEO)) return { error: "Elegí el tipo de torneo." };
-
   const inicio = texto("fecha_inicio");
   const fin = texto("fecha_fin");
   if (fin && inicio && fin < inicio) {
     return { error: "La fecha de fin no puede ser anterior a la de inicio." };
   }
 
-  const url = texto("url_inscripcion");
-  if (url && !/^https?:\/\//i.test(url)) {
-    return { error: "El link de inscripción tiene que empezar con http:// o https://" };
-  }
-
   const { error } = await supabase.from("torneos").insert({
     nombre,
-    tipo,
+    federacion: texto("federacion"),
     fecha_inicio: inicio,
     fecha_fin: fin,
     cierre_inscripcion: texto("cierre_inscripcion"),
     lugar: texto("lugar"),
-    url_inscripcion: url,
+    contacto_inscripcion: texto("contacto_inscripcion"),
     notas: texto("notas"),
     situacion: "pendiente",
     propuesto_por: user.id,

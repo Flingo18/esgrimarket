@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 
 import { proponerTorneo } from "@/acciones/torneos";
-import { TIPOS_TORNEO } from "@/lib/torneos";
+import { FEDERACIONES_SUGERIDAS } from "@/lib/torneos";
 
 const CAMPO =
   "w-full rounded-lg border border-borde bg-fondo-elevado px-3 py-2.5 " +
@@ -44,13 +44,16 @@ export function FormularioTorneo() {
         <input name="nombre" required maxLength={140} className={CAMPO} />
       </Campo>
 
-      <Campo etiqueta="Tipo">
-        <select name="tipo" required defaultValue="" className={CAMPO}>
-          <option value="">Elegí uno…</option>
-          {Object.entries(TIPOS_TORNEO).map(([id, label]) => (
-            <option key={id} value={id}>{label}</option>
+      <Campo
+        etiqueta="Federación"
+        ayuda="Elegí una de la lista o escribí otra: la lista crece sola."
+      >
+        <input name="federacion" list="federaciones" maxLength={60} className={CAMPO} />
+        <datalist id="federaciones">
+          {FEDERACIONES_SUGERIDAS.map((f) => (
+            <option key={f} value={f} />
           ))}
-        </select>
+        </datalist>
       </Campo>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -73,11 +76,14 @@ export function FormularioTorneo() {
         <input name="lugar" maxLength={140} className={CAMPO} />
       </Campo>
 
-      <Campo etiqueta="Link para anotarse">
+      <Campo
+        etiqueta="Dónde inscribirse"
+        ayuda="Un link, un mail o un teléfono. Según lo que pongas, el botón abre la página, el correo o WhatsApp."
+      >
         <input
-          name="url_inscripcion"
-          type="url"
-          placeholder="https://…"
+          name="contacto_inscripcion"
+          maxLength={200}
+          placeholder="https://…  ·  inscripciones@club.com  ·  11 1234-5678"
           className={CAMPO}
         />
       </Campo>

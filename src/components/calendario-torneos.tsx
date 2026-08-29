@@ -2,16 +2,11 @@
 
 import { useMemo, useState } from "react";
 
-import { COLOR_TIPO, TIPOS_TORNEO } from "@/lib/torneos";
+import { ModalTorneo, type TorneoDetalle } from "./modal-torneo";
+import { aFecha, colorBarra } from "@/lib/torneos";
 
-export type TorneoCalendario = {
-  id: string;
-  nombre: string;
-  tipo: string;
+export type TorneoCalendario = TorneoDetalle & {
   fecha_inicio: string;
-  fecha_fin: string | null;
-  lugar: string | null;
-  url_inscripcion: string | null;
 };
 
 const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -20,55 +15,110 @@ const MESES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-/** 'YYYY-MM-DD' sin pasar por Date, que en Argentina corre un día para atrás. */
-function aClave(anio: number, mes: number, dia: number) {
-  return `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+function clave(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
 }
+
+type Barra = {
+  torneo: TorneoCalendario;
+  columna: number;
+  ancho: number;
+  carril: number;
+  siguePorIzquierda: boolean;
+  siguePorDerecha: boolean;
+};
 
 export function CalendarioTorneos({ torneos }: { torneos: TorneoCalendario[] }) {
   const hoy = new Date();
   const [anio, setAnio] = useState(hoy.getFullYear());
   const [mes, setMes] = useState(hoy.getMonth());
-  const [elegido, setElegido] = useState<string | null>(null);
+  const [abierto, setAbierto] = useState<TorneoDetalle | null>(null);
 
   /**
-   * Un torneo de varios días ocupa todos sus días, no sólo el primero: quien
-   * mira el 20 de septiembre tiene que ver que ese día hay algo, aunque haya
-   * empezado el 19.
+   * Las semanas del mes, cada una con sus barras ya ubicadas.
+   *
+   * Un torneo que cruza de una semana a la otra se corta y se vuelve a dibujar
+   * en la siguiente, con las puntas redondeadas sólo del lado donde realmente
+   * empieza o termina. Los carriles evitan que dos torneos simultáneos se
+   * pisen: cada uno baja al primer carril libre.
    */
-  const porDia = useMemo(() => {
-    const mapa = new Map<string, TorneoCalendario[]>();
-    for (const t of torneos) {
-      const [ai, mi, di] = t.fecha_inicio.split("-").map(Number);
-      const [af, mf, df] = (t.fecha_fin ?? t.fecha_inicio).split("-").map(Number);
-      const cursor = new Date(ai, mi - 1, di);
-      const ultimo = new Date(af, mf - 1, df);
-      while (cursor <= ultimo) {
-        const k = aClave(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
-        mapa.set(k, [...(mapa.get(k) ?? []), t]);
-        cursor.setDate(cursor.getDate() + 1);
-      }
-    }
-    return mapa;
-  }, [torneos]);
+  const semanas = useMemo(() => {
+    const primero = new Date(anio, mes, 1);
+    const desplazamiento = (primero.getDay() + 6) % 7; // la semana arranca el lunes
+    const inicioGrilla = new Date(anio, mes, 1 - desplazamiento);
+    const diasDelMes = new Date(anio, mes + 1, 0).getDate();
+    const totalCeldas = Math.ceil((desplazamiento + diasDelMes) / 7) * 7;
 
-  const primero = new Date(anio, mes, 1);
-  // getDay() da 0 para domingo; acá la semana empieza el lunes.
-  const offset = (primero.getDay() + 6) % 7;
-  const diasDelMes = new Date(anio, mes + 1, 0).getDate();
-  const celdas = Array.from({ length: offset + diasDelMes }, (_, i) =>
-    i < offset ? null : i - offset + 1,
-  );
+    const bloques: { dias: Date[]; barras: Barra[] }[] = [];
+
+    for (let s = 0; s < totalCeldas / 7; s++) {
+      const dias = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(inicioGrilla);
+        d.setDate(inicioGrilla.getDate() + s * 7 + i);
+        return d;
+      });
+
+      const desde = dias[0];
+      const hasta = dias[6];
+      const carriles: Date[] = [];
+      const barras: Barra[] = [];
+
+      const enLaSemana = torneos
+        .filter((t) => {
+          const i = aFecha(t.fecha_inicio);
+          const f = aFecha(t.fecha_fin ?? t.fecha_inicio);
+          return f >= desde && i <= hasta;
+        })
+        .sort((a, b) => {
+          const ia = aFecha(a.fecha_inicio).getTime();
+          const ib = aFecha(b.fecha_inicio).getTime();
+          if (ia !== ib) return ia - ib;
+          const da = aFecha(a.fecha_fin ?? a.fecha_inicio).getTime() - ia;
+          const db = aFecha(b.fecha_fin ?? b.fecha_inicio).getTime() - ib;
+          return db - da; // los más largos primero, así quedan arriba
+        });
+
+      for (const t of enLaSemana) {
+        const i = aFecha(t.fecha_inicio);
+        const f = aFecha(t.fecha_fin ?? t.fecha_inicio);
+        const recorteI = i < desde ? desde : i;
+        const recorteF = f > hasta ? hasta : f;
+
+        const columna = Math.round(
+          (recorteI.getTime() - desde.getTime()) / 86_400_000,
+        );
+        const ancho =
+          Math.round((recorteF.getTime() - recorteI.getTime()) / 86_400_000) + 1;
+
+        let carril = carriles.findIndex((libreDesde) => libreDesde <= recorteI);
+        if (carril === -1) carril = carriles.length;
+        carriles[carril] = new Date(recorteF.getTime() + 86_400_000);
+
+        barras.push({
+          torneo: t,
+          columna: columna + 1,
+          ancho,
+          carril,
+          siguePorIzquierda: i < desde,
+          siguePorDerecha: f > hasta,
+        });
+      }
+
+      bloques.push({ dias, barras });
+    }
+
+    return bloques;
+  }, [torneos, anio, mes]);
 
   const mover = (delta: number) => {
     const d = new Date(anio, mes + delta, 1);
     setAnio(d.getFullYear());
     setMes(d.getMonth());
-    setElegido(null);
   };
 
-  const claveHoy = aClave(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-  const delDiaElegido = elegido ? (porDia.get(elegido) ?? []) : [];
+  const claveHoy = clave(hoy);
 
   return (
     <div>
@@ -94,100 +144,70 @@ export function CalendarioTorneos({ torneos }: { torneos: TorneoCalendario[] }) 
         </button>
       </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center">
+      <div className="mt-4 grid grid-cols-7 text-center">
         {DIAS.map((d) => (
-          <div key={d} className="text-xs text-texto-suave pb-1">
+          <div key={d} className="text-xs text-texto-suave pb-2">
             {d}
           </div>
         ))}
-
-        {celdas.map((dia, i) => {
-          if (dia === null) return <div key={`v${i}`} />;
-
-          const clave = aClave(anio, mes, dia);
-          const delDia = porDia.get(clave) ?? [];
-          const esHoy = clave === claveHoy;
-          const activo = elegido === clave;
-
-          return (
-            <button
-              key={clave}
-              type="button"
-              disabled={delDia.length === 0}
-              onClick={() => setElegido(activo ? null : clave)}
-              className={`aspect-square rounded-lg border p-1 flex flex-col items-center justify-start text-sm
-                ${activo ? "border-acento bg-acento-suave" : "border-borde"}
-                ${delDia.length > 0 ? "hover:border-acento cursor-pointer" : "opacity-50"}
-                ${esHoy ? "font-bold text-acento" : ""}`}
-            >
-              <span>{dia}</span>
-              {delDia.length > 0 && (
-                <span className="mt-0.5 flex gap-0.5 flex-wrap justify-center">
-                  {delDia.slice(0, 3).map((t) => (
-                    <span
-                      key={t.id}
-                      className={`size-1.5 rounded-full ${
-                        t.tipo === "fae"
-                          ? "bg-acento"
-                          : t.tipo === "fecba"
-                            ? "bg-precio"
-                            : "bg-texto-suave"
-                      }`}
-                    />
-                  ))}
-                </span>
-              )}
-            </button>
-          );
-        })}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-texto-suave">
-        <span className="flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-acento" /> FAE
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-precio" /> FECBA
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-texto-suave" /> Internacional
-        </span>
-      </div>
+      <div className="rounded-xl border border-borde overflow-hidden">
+        {semanas.map((semana, s) => (
+          <div key={s} className="border-b border-borde last:border-0">
+            <div className="grid grid-cols-7">
+              {semana.dias.map((d) => {
+                const esDeOtroMes = d.getMonth() !== mes;
+                const esHoy = clave(d) === claveHoy;
+                return (
+                  <div
+                    key={clave(d)}
+                    className={`px-1.5 pt-1.5 text-xs border-r border-borde last:border-0 ${
+                      esDeOtroMes ? "text-texto-suave/40" : "text-texto-suave"
+                    } ${esHoy ? "font-bold text-acento" : ""}`}
+                  >
+                    {d.getDate()}
+                  </div>
+                );
+              })}
+            </div>
 
-      {elegido && delDiaElegido.length > 0 && (
-        <ul className="mt-5 space-y-2">
-          {delDiaElegido.map((t) => (
-            <li
-              key={t.id}
-              className="rounded-xl border border-borde bg-fondo-elevado p-3"
+            <div
+              className="grid grid-cols-7 gap-y-0.5 px-1 pb-1.5 pt-0.5"
+              style={{ minHeight: "2.25rem" }}
             >
-              <span
-                className={`text-xs rounded-md px-2 py-0.5 font-medium ${COLOR_TIPO[t.tipo]}`}
-              >
-                {TIPOS_TORNEO[t.tipo as keyof typeof TIPOS_TORNEO]}
-              </span>
-              <p className="font-medium mt-1.5">{t.nombre}</p>
-              {t.lugar && <p className="text-sm text-texto-suave">{t.lugar}</p>}
-              {t.url_inscripcion && (
-                <a
-                  href={t.url_inscripcion}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm text-acento underline"
+              {semana.barras.map((b) => (
+                <button
+                  key={`${b.torneo.id}-${s}`}
+                  type="button"
+                  onClick={() => setAbierto(b.torneo)}
+                  title={b.torneo.nombre}
+                  style={{
+                    gridColumn: `${b.columna} / span ${b.ancho}`,
+                    gridRow: b.carril + 1,
+                    background: colorBarra(b.torneo.federacion),
+                    borderTopLeftRadius: b.siguePorIzquierda ? 0 : "0.25rem",
+                    borderBottomLeftRadius: b.siguePorIzquierda ? 0 : "0.25rem",
+                    borderTopRightRadius: b.siguePorDerecha ? 0 : "0.25rem",
+                    borderBottomRightRadius: b.siguePorDerecha ? 0 : "0.25rem",
+                  }}
+                  className="mx-px px-1.5 py-0.5 text-[11px] leading-tight text-white
+                             truncate text-left hover:opacity-85"
                 >
-                  Anotarse
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+                  {b.siguePorIzquierda ? "↩ " : ""}
+                  {b.torneo.nombre}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {!elegido && (
-        <p className="mt-5 text-sm text-texto-suave text-center">
-          Tocá un día marcado para ver qué hay.
-        </p>
-      )}
+      <p className="mt-3 text-sm text-texto-suave text-center">
+        Tocá un torneo para ver los detalles.
+      </p>
+
+      <ModalTorneo torneo={abierto} alCerrar={() => setAbierto(null)} />
     </div>
   );
 }
