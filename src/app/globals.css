@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
+/*
+ * Paleta: acero y blanco, que es de lo que está hecho el deporte. El acento
+ * es el celeste de la luz del aparato — se usa sólo para acciones, nunca
+ * decorativo, así que cuando aparece siempre significa "acá se hace click".
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --fondo: #ffffff;
+  --fondo-sutil: #f6f7f9;
+  --fondo-elevado: #ffffff;
+  --texto: #14181d;
+  --texto-suave: #5b6672;
+  --borde: #e2e6ea;
+  --acento: #0b6bcb;
+  --acento-texto: #ffffff;
+  --acento-suave: #e8f1fb;
+  --precio: #0f7b4f;
+  --alerta: #b42318;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --fondo: #0e1114;
+    --fondo-sutil: #14181d;
+    --fondo-elevado: #191e24;
+    --texto: #e8ebee;
+    --texto-suave: #98a3ae;
+    --borde: #262d35;
+    --acento: #4a9eff;
+    --acento-texto: #06121f;
+    --acento-suave: #14253a;
+    --precio: #3ecf8e;
+    --alerta: #f97066;
   }
 }
 
+@theme inline {
+  --color-fondo: var(--fondo);
+  --color-fondo-sutil: var(--fondo-sutil);
+  --color-fondo-elevado: var(--fondo-elevado);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-borde: var(--borde);
+  --color-acento: var(--acento);
+  --color-acento-texto: var(--acento-texto);
+  --color-acento-suave: var(--acento-suave);
+  --color-precio: var(--precio);
+  --color-alerta: var(--alerta);
+  --font-sans: var(--font-geist-sans);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+/* El foco tiene que verse: mucha gente va a usar esto desde el celular con
+   una mano mientras sostiene un bolso de esgrima con la otra. */
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
 }

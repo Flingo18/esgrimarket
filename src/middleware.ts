@@ -1,0 +1,17 @@
+import type { NextRequest } from "next/server";
+
+import { actualizarSesion } from "@/lib/supabase/middleware";
+
+export async function middleware(request: NextRequest) {
+  return actualizarSesion(request);
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Todo menos estáticos e imágenes. Correr el middleware sobre cada .png
+     * del catálogo sería gastar invocaciones de Vercel al pedo.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
