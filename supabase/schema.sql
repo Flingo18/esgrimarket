@@ -214,6 +214,41 @@ create table if not exists torneos (
         or (organizador_tipo = 'club' and federacion is null))
 );
 
+-- ─────────────────────────── Categorías ─────────────────────────────
+--
+-- Cada federación arma las suyas y no coinciden: lo que la FAE llama
+-- "Infantiles sub 13" en la FECBA es "Infantiles (U13)", y la FECBA tiene un
+-- "Promocional" que en la FAE no existe. Por eso la categoría pertenece a una
+-- federación y no hay una lista única.
+--
+-- Las edita sólo el admin, y quedan fuera del sistema de correcciones por
+-- votación: son la lista contra la que se cargan los torneos, así que si
+-- cambiaran solas cambiaría el significado de todo lo ya cargado.
+create table if not exists categorias (
+  id          uuid primary key default gen_random_uuid(),
+  federacion  text not null,
+  nombre      text not null check (char_length(nombre) between 2 and 60),
+  -- Para explicar de qué se trata, no para validar: cada torneo aclara en su
+  -- circular cómo se cuenta la edad ese año.
+  edad_desde  smallint check (edad_desde is null or edad_desde between 0 and 120),
+  edad_hasta  smallint check (edad_hasta is null or edad_hasta between 0 and 120),
+  activa      boolean not null default true,
+  creado_en   timestamptz not null default now(),
+
+  unique (federacion, nombre),
+  constraint edades_coherentes
+    check (edad_desde is null or edad_hasta is null or edad_hasta >= edad_desde)
+);
+
+create table if not exists torneos_categorias (
+  torneo_id    uuid not null references torneos(id) on delete cascade,
+  categoria_id uuid not null references categorias(id) on delete cascade,
+  primary key (torneo_id, categoria_id)
+);
+
+create index if not exists idx_torneos_categorias_categoria
+  on torneos_categorias (categoria_id);
+
 -- ───────────────────────── Correcciones ─────────────────────────────
 --
 -- Quien cargó una entrada la edita directo. Cualquier otro propone una

@@ -28,7 +28,8 @@ export default async function PaginaEditarTorneo({
   if (!esAdmin) notFound();
 
   const admin = crearClienteAdmin();
-  const [{ data: torneo }, { data: salas }] = await Promise.all([
+  const [{ data: torneo }, { data: salas }, { data: categorias }, { data: elegidas }] =
+    await Promise.all([
     admin
       .from("torneos")
       .select("id, nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, situacion, actualizado_en")
@@ -39,6 +40,14 @@ export default async function PaginaEditarTorneo({
       .select("id, nombre")
       .eq("situacion", "aprobada")
       .order("nombre"),
+    admin
+      .from("categorias")
+      .select("id, federacion, nombre, edad_desde, edad_hasta")
+      .eq("activa", true)
+      .order("edad_desde", { nullsFirst: false })
+      .order("edad_hasta", { nullsFirst: false })
+      .order("nombre"),
+    admin.from("torneos_categorias").select("categoria_id").eq("torneo_id", id),
   ]);
 
   if (!torneo) notFound();
@@ -58,7 +67,11 @@ export default async function PaginaEditarTorneo({
       <div className="mt-8">
         <FormularioTorneo
           salas={salas ?? []}
-          inicial={torneo as TorneoEditable}
+          categorias={categorias ?? []}
+          inicial={{
+            ...(torneo as TorneoEditable),
+            categorias: (elegidas ?? []).map((c) => c.categoria_id),
+          }}
         />
       </div>
 

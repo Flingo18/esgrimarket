@@ -24,13 +24,27 @@ export default async function PaginaCorregirTorneo({
   if (!user) redirect(`/ingresar?next=/torneos/${id}/corregir`);
 
   const admin = crearClienteAdmin();
-  const [{ data: torneo }, { data: salas }, { data: esAdmin }] = await Promise.all([
+  const [
+    { data: torneo },
+    { data: salas },
+    { data: categorias },
+    { data: elegidas },
+    { data: esAdmin },
+  ] = await Promise.all([
     admin
       .from("torneos")
       .select("id, nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, propuesto_por, situacion")
       .eq("id", id)
       .single(),
     admin.from("salas").select("id, nombre").eq("situacion", "aprobada").order("nombre"),
+    admin
+      .from("categorias")
+      .select("id, federacion, nombre, edad_desde, edad_hasta")
+      .eq("activa", true)
+      .order("edad_desde", { nullsFirst: false })
+      .order("edad_hasta", { nullsFirst: false })
+      .order("nombre"),
+    admin.from("torneos_categorias").select("categoria_id").eq("torneo_id", id),
     supabase.rpc("es_admin"),
   ]);
 
@@ -79,7 +93,11 @@ export default async function PaginaCorregirTorneo({
       <div className="mt-8">
         <FormularioTorneo
           salas={salas ?? []}
-          inicial={torneo as TorneoEditable}
+          categorias={categorias ?? []}
+          inicial={{
+            ...(torneo as TorneoEditable),
+            categorias: (elegidas ?? []).map((c) => c.categoria_id),
+          }}
           puedeEditar={puedeEditar}
         />
       </div>

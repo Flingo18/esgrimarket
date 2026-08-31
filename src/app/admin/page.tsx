@@ -201,9 +201,14 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         <h2 className="text-lg font-semibold">
           Torneos ({torneosProximos.length})
         </h2>
-        <Link href="/torneos/proponer" className="text-sm text-acento underline">
-          Agregar uno
-        </Link>
+        <div className="flex gap-4">
+          <Link href="/admin/categorias" className="text-sm text-acento underline">
+            Categorías
+          </Link>
+          <Link href="/torneos/proponer" className="text-sm text-acento underline">
+            Agregar uno
+          </Link>
+        </div>
       </div>
 
       <ul className="mt-3 space-y-2">

@@ -67,6 +67,12 @@ export function ListaTorneos({
                 <p className="mt-1.5 font-medium leading-snug">{t.nombre}</p>
                 {t.lugar && <p className="text-sm text-texto-suave">{t.lugar}</p>}
 
+                {t.categorias && t.categorias.length > 0 && (
+                  <p className="mt-1 text-xs text-texto-suave">
+                    {t.categorias.map((c) => c.nombre).join(" · ")}
+                  </p>
+                )}
+
                 {dias !== null && (
                   <p
                     className={`text-sm mt-1 ${

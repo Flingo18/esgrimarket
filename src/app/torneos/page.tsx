@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 const COLUMNAS =
-  "id, nombre, federacion, organizador_tipo, sala_id, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, actualizado_en";
+  "id, nombre, federacion, organizador_tipo, sala_id, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, actualizado_en, torneos_categorias(categorias(nombre))";
 
 /**
  * Las correcciones que esperan aval, listas para la ficha de cada torneo.
@@ -116,7 +116,16 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
   // Las federaciones del filtro salen de los datos, no de una lista fija: así
   // agregar una es cargar un torneo y nada más.
   const { data } = await q;
-  const todos = data ?? [];
+
+  // El embebido llega como torneos_categorias[].categorias. Se aplana acá y
+  // no en la vista: si el componente recibiera la forma cruda, `categorias`
+  // quedaría siempre vacío y no fallaría nada — el peor tipo de error.
+  const todos = (data ?? []).map(({ torneos_categorias, ...t }) => ({
+    ...t,
+    categorias: (torneos_categorias ?? [])
+      .map((tc) => tc.categorias)
+      .filter((c): c is { nombre: string } => c !== null),
+  }));
 
   const hoy = new Date().toISOString().slice(0, 10);
   const sinFecha = todos.filter((t) => !t.fecha_inicio);

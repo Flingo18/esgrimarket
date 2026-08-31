@@ -10,6 +10,35 @@ import { diferencias } from "@/lib/correcciones";
 
 export type EstadoTorneo = { error?: string; ok?: string };
 
+
+/**
+ * Deja las categorías del torneo exactamente como vinieron del formulario.
+ *
+ * Se borra y se vuelve a insertar en vez de calcular el diferencial: son tres
+ * o cuatro filas por torneo y el orden no significa nada, así que la versión
+ * simple es también la que no se puede equivocar.
+ *
+ * Los ids se validan contra la tabla: el formulario manda lo que quiera.
+ */
+async function guardarCategorias(
+  admin: ReturnType<typeof crearClienteAdmin>,
+  torneoId: string,
+  pedidas: string[],
+): Promise<void> {
+  const { data: validas } = await admin
+    .from("categorias")
+    .select("id")
+    .in("id", pedidas.length ? pedidas : ["00000000-0000-0000-0000-000000000000"]);
+
+  await admin.from("torneos_categorias").delete().eq("torneo_id", torneoId);
+
+  const filas = (validas ?? []).map((c) => ({
+    torneo_id: torneoId,
+    categoria_id: c.id,
+  }));
+  if (filas.length) await admin.from("torneos_categorias").insert(filas);
+}
+
 /** Propone un torneo. Queda pendiente hasta que un admin lo apruebe. */
 export async function proponerTorneo(
   _previo: EstadoTorneo,
@@ -47,7 +76,7 @@ export async function proponerTorneo(
     return { error: "La fecha de fin no puede ser anterior a la de inicio." };
   }
 
-  const { error } = await supabase.from("torneos").insert({
+  const { data: creado, error } = await supabase.from("torneos").insert({
     nombre,
     organizador_tipo: organizador,
     federacion,
@@ -60,11 +89,19 @@ export async function proponerTorneo(
     notas: texto("notas"),
     situacion: "pendiente",
     propuesto_por: user.id,
-  });
+  }).select("id").single();
 
   if (error) {
     console.error("Error proponiendo torneo:", error.message);
     return { error: "No pudimos guardar la propuesta. Probá de nuevo." };
+  }
+
+  if (creado) {
+    await guardarCategorias(
+      crearClienteAdmin(),
+      creado.id,
+      datos.getAll("categorias").map(String),
+    );
   }
 
   revalidatePath("/torneos");
@@ -159,6 +196,15 @@ export async function actualizarTorneo(
       console.error("Error actualizando torneo:", error.message);
       return { error: "No pudimos guardar los cambios." };
     }
+
+    // Sólo quien edita directo toca las categorías: en una corrección viajan
+    // campos de la fila, y esto es una tabla aparte. El formulario ni siquiera
+    // las muestra cuando se está sugiriendo.
+    await guardarCategorias(
+      admin,
+      id,
+      datos.getAll("categorias").map(String),
+    );
 
     revalidatePath("/torneos");
     revalidatePath("/admin");

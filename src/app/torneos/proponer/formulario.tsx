@@ -3,7 +3,12 @@
 import { useActionState, useState } from "react";
 
 import { actualizarTorneo, proponerTorneo } from "@/acciones/torneos";
-import { FEDERACIONES } from "@/lib/torneos";
+import {
+  FEDERACIONES,
+  categoriasPorFederacion,
+  rangoEdad,
+  type Categoria,
+} from "@/lib/torneos";
 
 const CAMPO =
   "w-full rounded-lg border border-borde bg-fondo-elevado px-3 py-2.5 " +
@@ -41,6 +46,7 @@ export type TorneoEditable = {
   lugar: string | null;
   contacto_inscripcion: string | null;
   notas: string | null;
+  categorias?: string[];
 };
 
 /**
@@ -51,10 +57,12 @@ export type TorneoEditable = {
  */
 export function FormularioTorneo({
   salas,
+  categorias = [],
   inicial,
   puedeEditar = true,
 }: {
   salas: Sala[];
+  categorias?: Categoria[];
   inicial?: TorneoEditable;
   puedeEditar?: boolean;
 }) {
@@ -176,6 +184,52 @@ export function FormularioTorneo({
           className={CAMPO}
         />
       </Campo>
+
+      {categorias.length > 0 && !sugiriendo && (
+        <Campo
+          etiqueta="Categorías"
+          ayuda="Las que compiten en este torneo. Cada federación tiene las suyas y no coinciden, por eso van separadas."
+        >
+          <div className="space-y-3">
+            {categoriasPorFederacion(categorias).map(([federacion, grupo]) => (
+              <fieldset key={federacion}>
+                <legend className="text-xs font-medium text-texto-suave mb-1.5">
+                  {FEDERACIONES[federacion as keyof typeof FEDERACIONES] ?? federacion}
+                </legend>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {grupo.map((c) => (
+                    <label key={c.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="categorias"
+                        value={c.id}
+                        defaultChecked={inicial?.categorias?.includes(c.id)}
+                        className="size-4 accent-[var(--acento)]"
+                      />
+                      <span>
+                        {c.nombre}
+                        {rangoEdad(c.edad_desde, c.edad_hasta) && (
+                          <span className="text-texto-suave">
+                            {" "}({rangoEdad(c.edad_desde, c.edad_hasta)})
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
+          </div>
+        </Campo>
+      )}
+
+      {sugiriendo && (inicial?.categorias?.length ?? 0) > 0 && (
+        <p className="text-xs text-texto-suave">
+          Las categorías no entran en las correcciones por votación: son la
+          lista fija contra la que se cargan los torneos. Si están mal,
+          escribilo en las notas.
+        </p>
+      )}
 
       <Campo etiqueta="Lugar" ayuda="Ej: CeNARD, Ciudad de Buenos Aires.">
         <input

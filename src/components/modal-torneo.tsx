@@ -27,6 +27,7 @@ export type TorneoDetalle = {
   contacto_inscripcion: string | null;
   notas: string | null;
   actualizado_en: string;
+  categorias?: { nombre: string }[];
 };
 
 /**
@@ -116,6 +117,19 @@ export function ModalTorneo({
                 ? "La inscripción cierra hoy"
                 : `Cierra la inscripción en ${dias} ${dias === 1 ? "día" : "días"}`}
           </p>
+        )}
+
+        {torneo.categorias && torneo.categorias.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {torneo.categorias.map((c) => (
+              <span
+                key={c.nombre}
+                className="text-xs rounded-md border border-borde px-2 py-0.5"
+              >
+                {c.nombre}
+              </span>
+            ))}
+          </div>
         )}
 
         {torneo.notas && (

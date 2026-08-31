@@ -182,3 +182,37 @@ export function interpretarContacto(valor?: string | null): Contacto {
   // No parece ninguna de las tres: se muestra tal cual, sin inventar una acción.
   return null;
 }
+
+export type Categoria = {
+  id: string;
+  federacion: string;
+  nombre: string;
+  edad_desde: number | null;
+  edad_hasta: number | null;
+};
+
+/**
+ * Cómo se lee el rango de edad de una categoría.
+ *
+ * Es sólo para explicar de qué se trata: cada torneo aclara en su circular
+ * cómo se cuenta la edad ese año, así que acá no se valida nada con esto.
+ */
+export function rangoEdad(desde: number | null, hasta: number | null): string {
+  if (desde !== null && hasta !== null) return `${desde} a ${hasta} años`;
+  if (desde !== null) return `${desde} años en adelante`;
+  if (hasta !== null) return `hasta ${hasta} años`;
+  return "";
+}
+
+/** Agrupa por federación, en el orden en que se muestran las federaciones. */
+export function categoriasPorFederacion(
+  categorias: Categoria[],
+): [string, Categoria[]][] {
+  const grupos = new Map<string, Categoria[]>();
+  for (const c of categorias) {
+    grupos.set(c.federacion, [...(grupos.get(c.federacion) ?? []), c]);
+  }
+  return Object.keys(FEDERACIONES)
+    .filter((f) => grupos.has(f))
+    .map((f) => [f, grupos.get(f)!] as [string, Categoria[]]);
+}

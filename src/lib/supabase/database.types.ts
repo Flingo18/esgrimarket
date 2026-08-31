@@ -358,6 +358,49 @@ export type Database = {
           },
         ];
       };
+      categorias: {
+        Row: {
+          id: string;
+          federacion: string;
+          nombre: string;
+          edad_desde: number | null;
+          edad_hasta: number | null;
+          activa: boolean;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          federacion: string;
+          nombre: string;
+          edad_desde?: number | null;
+          edad_hasta?: number | null;
+          activa?: boolean;
+          creado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["categorias"]["Insert"]>;
+        Relationships: [];
+      };
+      torneos_categorias: {
+        Row: { torneo_id: string; categoria_id: string };
+        Insert: { torneo_id: string; categoria_id: string };
+        Update: Partial<Database["public"]["Tables"]["torneos_categorias"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "torneos_categorias_torneo_id_fkey";
+            columns: ["torneo_id"];
+            isOneToOne: false;
+            referencedRelation: "torneos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "torneos_categorias_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       cotizacion_cache: {
         Row: { id: boolean; venta: number; fuente: string; actualizado: string };
         Insert: { id?: boolean; venta: number; fuente: string; actualizado?: string };

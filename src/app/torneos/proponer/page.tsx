@@ -23,6 +23,14 @@ export default async function PaginaProponerTorneo() {
     .eq("activa", true)
     .order("nombre");
 
+  const { data: categorias } = await supabase
+    .from("categorias")
+    .select("id, federacion, nombre, edad_desde, edad_hasta")
+    .eq("activa", true)
+    .order("edad_desde", { nullsFirst: false })
+    .order("edad_hasta", { nullsFirst: false })
+    .order("nombre");
+
   const { data: propios } = await supabase
     .from("torneos")
     .select("id, nombre, situacion")
@@ -57,7 +65,7 @@ export default async function PaginaProponerTorneo() {
       )}
 
       <div className="mt-8">
-        <FormularioTorneo salas={salas ?? []} />
+        <FormularioTorneo salas={salas ?? []} categorias={categorias ?? []} />
       </div>
 
       <p className="mt-8 text-sm text-texto-suave">
