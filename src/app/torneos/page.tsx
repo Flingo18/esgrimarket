@@ -13,7 +13,14 @@ import {
   cambiosVisibles,
   type CorreccionConCambios,
 } from "@/lib/correcciones";
-import { FEDERACIONES, claveMes, mesDe } from "@/lib/torneos";
+import {
+  FEDERACIONES,
+  FEDERACION_CORTA,
+  categoriasPorFederacion,
+  claveMes,
+  mesDe,
+  type Categoria,
+} from "@/lib/torneos";
 import { AvisoTorneos } from "@/components/aviso-torneos";
 
 export const metadata: Metadata = {
@@ -21,6 +28,9 @@ export const metadata: Metadata = {
   description:
     "Todos los torneos de esgrima de Argentina, con fechas de cierre de inscripción y dónde anotarse.",
 };
+
+/** Para cortar una consulta cuando el filtro no dejó ningún torneo. */
+const SIN_RESULTADOS = "00000000-0000-0000-0000-000000000000";
 
 const COLUMNAS =
   "id, nombre, federacion, organizador_tipo, sala_id, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, actualizado_en, torneos_categorias(categorias(nombre))";
@@ -101,10 +111,33 @@ const SELECT =
 export default async function PaginaTorneos({ searchParams }: PageProps<"/torneos">) {
   const params = await searchParams;
   const federacion = typeof params.federacion === "string" ? params.federacion : "";
+  const categoria = typeof params.categoria === "string" ? params.categoria : "";
   const verPasados = params.pasados === "1";
   const vista = params.vista === "calendario" ? "calendario" : "lista";
 
   const supabase = await crearClienteServidor();
+
+  const [{ data: categorias }, deLaCategoria] = await Promise.all([
+    supabase
+      .from("categorias")
+      .select("id, federacion, nombre, edad_desde, edad_hasta")
+      .eq("activa", true)
+      .order("edad_desde", { nullsFirst: false })
+      .order("edad_hasta", { nullsFirst: false })
+      .order("nombre"),
+    // Qué torneos tienen esta categoría, en una consulta aparte.
+    //
+    // Se podría filtrar con un join embebido, pero PostgREST recorta también
+    // las categorías que devuelve: el torneo terminaría mostrando sólo la que
+    // se filtró y no las demás en las que compite.
+    categoria
+      ? supabase
+          .from("torneos_categorias")
+          .select("torneo_id")
+          .eq("categoria_id", categoria)
+          .then(({ data }) => (data ?? []).map((f) => f.torneo_id))
+      : Promise.resolve(null),
+  ]);
 
   let q = supabase
     .from("torneos")
@@ -112,6 +145,11 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
     .order("fecha_inicio", { ascending: true, nullsFirst: false });
 
   if (federacion) q = q.eq("federacion", federacion);
+  // Sin torneos en esa categoría el `in` vacío no filtra nada, así que se
+  // corta con un id imposible.
+  if (deLaCategoria) {
+    q = q.in("id", deLaCategoria.length ? deLaCategoria : [SIN_RESULTADOS]);
+  }
 
   // Las federaciones del filtro salen de los datos, no de una lista fija: así
   // agregar una es cargar un torneo y nada más.
@@ -145,10 +183,18 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
   } = await supabase.auth.getUser();
   const correcciones = await correccionesPorTorneo(todos, user?.id ?? null);
 
-  const conFiltro = (extra: string) =>
-    `/torneos?${[federacion && `federacion=${encodeURIComponent(federacion)}`, extra]
-      .filter(Boolean)
-      .join("&")}`;
+  /** El mismo listado con un filtro cambiado, conservando los demás. */
+  const conFiltro = (extra: string, cambios?: Record<string, string>) => {
+    const url = new URLSearchParams();
+    const puestos = { federacion, categoria, ...cambios };
+    for (const [k, v] of Object.entries(puestos)) if (v) url.set(k, v);
+    for (const par of extra.split("&").filter(Boolean)) {
+      const [k, v = ""] = par.split("=");
+      url.set(k, decodeURIComponent(v));
+    }
+    const q = url.toString();
+    return q ? `/torneos?${q}` : "/torneos";
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -196,6 +242,22 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
               <option key={id} value={id}>{nombre}</option>
             ))}
           </select>
+
+          <select name="categoria" defaultValue={categoria} className={SELECT}>
+            <option value="">Todas las categorías</option>
+            {categoriasPorFederacion((categorias ?? []) as Categoria[]).map(
+              ([fed, grupo]) => (
+                <optgroup
+                  key={fed}
+                  label={FEDERACION_CORTA[fed] ?? FEDERACIONES[fed as keyof typeof FEDERACIONES] ?? fed}
+                >
+                  {grupo.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+                </optgroup>
+              ),
+            )}
+          </select>
           <button
             type="submit"
             className="rounded-lg bg-acento text-acento-texto text-sm font-medium px-4 py-2 hover:opacity-90"
@@ -228,6 +290,17 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
           {aMostrar.length === 0 && sinFecha.length === 0 && (
             <p className="mt-12 text-center text-texto-suave">
               No hay torneos cargados con esos filtros.
+              {categoria && (
+                <>
+                  {" "}
+                  <Link
+                    href={conFiltro(`vista=${vista}`, { categoria: "" })}
+                    className="text-acento underline"
+                  >
+                    Ver todas las categorías
+                  </Link>
+                </>
+              )}
             </p>
           )}
 
