@@ -255,7 +255,7 @@ export function ModalTorneo({
             href={`/torneos/${torneo.id}/corregir`}
             className="text-xs text-acento underline"
           >
-            ¿Hay algo mal? Corregilo
+            ¿Falta un dato o está mal? Agregalo
           </a>
         </div>
       </div>
