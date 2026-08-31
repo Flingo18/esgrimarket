@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { avalarCorreccion } from "@/acciones/correcciones";
+import type { CorreccionConCambios } from "@/lib/correcciones";
 import { AvisoTorneos } from "./aviso-torneos";
 import { SITIO_FEDERACION } from "@/lib/torneos";
 import {
@@ -35,9 +37,11 @@ export type TorneoDetalle = {
  */
 export function ModalTorneo({
   torneo,
+  correcciones = [],
   alCerrar,
 }: {
   torneo: TorneoDetalle | null;
+  correcciones?: CorreccionConCambios[];
   alCerrar: () => void;
 }) {
   useEffect(() => {
@@ -141,6 +145,75 @@ export function ModalTorneo({
             </p>
           )}
         </div>
+
+        {correcciones.length > 0 && (
+          <section className="mt-5 rounded-xl border border-acento/40 bg-acento-suave p-3">
+            <p className="text-sm font-medium">
+              {correcciones.length === 1
+                ? "Alguien propone corregir esta ficha"
+                : `${correcciones.length} correcciones propuestas`}
+            </p>
+            <p className="text-xs text-texto-suave mt-0.5">
+              Se aplican solas cuando junten los avales. Si sabés que está
+              bien, avalala.
+            </p>
+
+            <ul className="mt-3 space-y-3">
+              {correcciones.map((c) => (
+                <li key={c.id} className="rounded-lg bg-fondo-elevado p-3">
+                  <ul className="space-y-1 text-sm">
+                    {c.cambios.map((c2) => (
+                      <li key={c2.campo} className="flex flex-wrap gap-x-2">
+                        <span className="text-texto-suave">{c2.etiqueta}:</span>
+                        <span className="line-through text-texto-suave">
+                          {c2.antes}
+                        </span>
+                        <span aria-hidden>→</span>
+                        <span className="font-medium">{c2.despues}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {c.motivo && (
+                    <p className="mt-2 text-xs text-texto-suave italic">
+                      “{c.motivo}”
+                    </p>
+                  )}
+
+                  <div className="mt-2.5 flex flex-wrap items-center gap-3">
+                    <span className="text-xs text-texto-suave">
+                      {c.avales} de {c.avales + c.faltan} avales
+                    </span>
+
+                    {c.puedeAvalar ? (
+                      <form action={avalarCorreccion}>
+                        <input type="hidden" name="id" value={c.id} />
+                        <button
+                          type="submit"
+                          className="rounded-lg bg-acento text-acento-texto text-sm font-medium px-3 py-1.5 hover:opacity-90"
+                        >
+                          Está bien, que se aplique
+                        </button>
+                      </form>
+                    ) : (
+                      <span className="text-xs text-texto-suave">
+                        {c.esMia ? (
+                          "La propusiste vos"
+                        ) : c.yaAvale ? (
+                          "Ya la avalaste"
+                        ) : (
+                          <a href="/ingresar" className="text-acento underline">
+                            Ingresá para avalarla
+                          </a>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Las fechas se reprograman seguido: saber cuándo se tocó por última
             vez es lo que permite confiar —o no— en lo que dice la ficha. Y si

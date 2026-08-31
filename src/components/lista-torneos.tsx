@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ModalTorneo, type TorneoDetalle } from "./modal-torneo";
+import type { CorreccionConCambios } from "@/lib/correcciones";
 import {
   colorFederacion,
   diasHasta,
@@ -14,19 +15,31 @@ import {
  * Listado de torneos. Abre la misma ficha que el calendario, para que tocar
  * un torneo haga siempre lo mismo, se llegue desde donde se llegue.
  */
-export function ListaTorneos({ torneos }: { torneos: TorneoDetalle[] }) {
-  const [abierto, setAbierto] = useState<TorneoDetalle | null>(null);
+export function ListaTorneos({
+  torneos,
+  correcciones,
+}: {
+  torneos: TorneoDetalle[];
+  correcciones?: Map<string, CorreccionConCambios[]>;
+}) {
+  // Se guarda el id y no el torneo: después de avalar una corrección el
+  // servidor devuelve datos nuevos, y una copia guardada en el estado
+  // seguiría mostrando el aval que la persona acaba de dar como si no
+  // hubiera pasado.
+  const [abiertoId, setAbiertoId] = useState<string | null>(null);
+  const abierto = torneos.find((t) => t.id === abiertoId) ?? null;
 
   return (
     <>
       <ul className="mt-3 space-y-3">
         {torneos.map((t) => {
           const dias = t.cierre_inscripcion ? diasHasta(t.cierre_inscripcion) : null;
+          const pendientes = correcciones?.get(t.id)?.length ?? 0;
           return (
             <li key={t.id}>
               <button
                 type="button"
-                onClick={() => setAbierto(t)}
+                onClick={() => setAbiertoId(t.id)}
                 className="w-full text-left rounded-xl border border-borde bg-fondo-elevado p-4 hover:border-acento"
               >
                 <div className="flex flex-wrap items-center gap-2">
@@ -40,6 +53,13 @@ export function ListaTorneos({ torneos }: { torneos: TorneoDetalle[] }) {
                   {t.fecha_inicio && (
                     <span className="text-sm font-medium">
                       {rangoDeFechas(t.fecha_inicio, t.fecha_fin)}
+                    </span>
+                  )}
+                  {pendientes > 0 && (
+                    <span className="text-xs rounded-md px-2 py-0.5 font-medium border border-acento text-acento">
+                      {pendientes === 1
+                        ? "1 corrección propuesta"
+                        : `${pendientes} correcciones propuestas`}
                     </span>
                   )}
                 </div>
@@ -66,7 +86,11 @@ export function ListaTorneos({ torneos }: { torneos: TorneoDetalle[] }) {
         })}
       </ul>
 
-      <ModalTorneo torneo={abierto} alCerrar={() => setAbierto(null)} />
+      <ModalTorneo
+        torneo={abierto}
+        correcciones={abierto ? correcciones?.get(abierto.id) : undefined}
+        alCerrar={() => setAbiertoId(null)}
+      />
     </>
   );
 }

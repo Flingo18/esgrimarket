@@ -6,7 +6,13 @@ import {
   type TorneoCalendario,
 } from "@/components/calendario-torneos";
 import { ListaTorneos } from "@/components/lista-torneos";
+import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import {
+  VOTOS_PARA_APLICAR,
+  cambiosVisibles,
+  type CorreccionConCambios,
+} from "@/lib/correcciones";
 import { FEDERACIONES, claveMes, mesDe } from "@/lib/torneos";
 import { AvisoTorneos } from "@/components/aviso-torneos";
 
@@ -18,6 +24,76 @@ export const metadata: Metadata = {
 
 const COLUMNAS =
   "id, nombre, federacion, organizador_tipo, sala_id, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, actualizado_en";
+
+/**
+ * Las correcciones que esperan aval, listas para la ficha de cada torneo.
+ *
+ * Van pegadas al torneo y no sólo en la cola aparte: el que puede decir si
+ * una fecha está bien es el que estaba mirando ese torneo, y mandarlo a otra
+ * página a buscarla es perderlo.
+ */
+async function correccionesPorTorneo(
+  torneos: { id: string }[],
+  usuario: string | null,
+): Promise<Map<string, CorreccionConCambios[]>> {
+  const porTorneo = new Map<string, CorreccionConCambios[]>();
+  if (torneos.length === 0) return porTorneo;
+
+  const admin = crearClienteAdmin();
+  const { data: pendientes } = await admin
+    .from("correcciones")
+    .select("id, fila_id, campos, motivo, propuesta_por")
+    .eq("tabla", "torneos")
+    .eq("situacion", "pendiente")
+    .in("fila_id", torneos.map((t) => t.id));
+
+  if (!pendientes?.length) return porTorneo;
+
+  const [{ data: votos }, { data: salas }] = await Promise.all([
+    admin
+      .from("correcciones_votos")
+      .select("correccion_id, usuario_id")
+      .in("correccion_id", pendientes.map((c) => c.id)),
+    admin.from("salas").select("id, nombre"),
+  ]);
+
+  const nombresDeSala = new Map((salas ?? []).map((s) => [s.id, s.nombre]));
+  const porCorreccion = new Map<string, string[]>();
+  for (const v of votos ?? []) {
+    porCorreccion.set(v.correccion_id, [
+      ...(porCorreccion.get(v.correccion_id) ?? []),
+      v.usuario_id,
+    ]);
+  }
+
+  const actuales = new Map(torneos.map((t) => [t.id, t as Record<string, unknown>]));
+
+  for (const c of pendientes) {
+    const votantes = porCorreccion.get(c.id) ?? [];
+    const esMia = usuario !== null && c.propuesta_por === usuario;
+    const yaAvale = usuario !== null && votantes.includes(usuario);
+
+    porTorneo.set(c.fila_id, [
+      ...(porTorneo.get(c.fila_id) ?? []),
+      {
+        id: c.id,
+        motivo: c.motivo,
+        avales: votantes.length,
+        faltan: Math.max(0, VOTOS_PARA_APLICAR - votantes.length),
+        esMia,
+        yaAvale,
+        puedeAvalar: usuario !== null && !esMia && !yaAvale,
+        cambios: cambiosVisibles(
+          c.campos as Record<string, unknown>,
+          actuales.get(c.fila_id),
+          nombresDeSala,
+        ),
+      },
+    ]);
+  }
+
+  return porTorneo;
+}
 
 const SELECT =
   "rounded-lg border border-borde bg-fondo-elevado px-2.5 py-2 text-sm outline-none focus:border-acento";
@@ -54,6 +130,11 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
     const k = claveMes(t.fecha_inicio!);
     porMes.set(k, [...(porMes.get(k) ?? []), t]);
   }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const correcciones = await correccionesPorTorneo(todos, user?.id ?? null);
 
   const conFiltro = (extra: string) =>
     `/torneos?${[federacion && `federacion=${encodeURIComponent(federacion)}`, extra]
@@ -128,7 +209,10 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
 
       {vista === "calendario" ? (
         <div className="mt-6">
-          <CalendarioTorneos torneos={conFecha as TorneoCalendario[]} />
+          <CalendarioTorneos
+            torneos={conFecha as TorneoCalendario[]}
+            correcciones={correcciones}
+          />
         </div>
       ) : (
         <>
@@ -143,7 +227,7 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
               <h2 className="text-sm font-semibold uppercase tracking-wide text-texto-suave">
                 {mesDe(torneos[0].fecha_inicio!)}
               </h2>
-              <ListaTorneos torneos={torneos} />
+              <ListaTorneos torneos={torneos} correcciones={correcciones} />
             </section>
           ))}
 
@@ -152,7 +236,7 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
               <h2 className="text-sm font-semibold uppercase tracking-wide text-texto-suave">
                 Fecha por confirmar
               </h2>
-              <ListaTorneos torneos={sinFecha} />
+              <ListaTorneos torneos={sinFecha} correcciones={correcciones} />
             </section>
           )}
         </>

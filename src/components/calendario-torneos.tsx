@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { ModalTorneo, type TorneoDetalle } from "./modal-torneo";
+import type { CorreccionConCambios } from "@/lib/correcciones";
 import { aFecha, colorBarra } from "@/lib/torneos";
 
 export type TorneoCalendario = TorneoDetalle & {
@@ -30,11 +31,19 @@ type Barra = {
   siguePorDerecha: boolean;
 };
 
-export function CalendarioTorneos({ torneos }: { torneos: TorneoCalendario[] }) {
+export function CalendarioTorneos({
+  torneos,
+  correcciones,
+}: {
+  torneos: TorneoCalendario[];
+  correcciones?: Map<string, CorreccionConCambios[]>;
+}) {
   const hoy = new Date();
   const [anio, setAnio] = useState(hoy.getFullYear());
   const [mes, setMes] = useState(hoy.getMonth());
-  const [abierto, setAbierto] = useState<TorneoDetalle | null>(null);
+  // El id y no el torneo: ver el comentario en lista-torneos.
+  const [abiertoId, setAbiertoId] = useState<string | null>(null);
+  const abierto = torneos.find((t) => t.id === abiertoId) ?? null;
 
   /**
    * Las semanas del mes, cada una con sus barras ya ubicadas.
@@ -180,8 +189,12 @@ export function CalendarioTorneos({ torneos }: { torneos: TorneoCalendario[] }) 
                 <button
                   key={`${b.torneo.id}-${s}`}
                   type="button"
-                  onClick={() => setAbierto(b.torneo)}
-                  title={b.torneo.nombre}
+                  onClick={() => setAbiertoId(b.torneo.id)}
+                  title={
+                    correcciones?.get(b.torneo.id)?.length
+                      ? `${b.torneo.nombre} — hay una corrección propuesta`
+                      : b.torneo.nombre
+                  }
                   style={{
                     gridColumn: `${b.columna} / span ${b.ancho}`,
                     gridRow: b.carril + 1,
@@ -190,11 +203,16 @@ export function CalendarioTorneos({ torneos }: { torneos: TorneoCalendario[] }) 
                     borderBottomLeftRadius: b.siguePorIzquierda ? 0 : "0.25rem",
                     borderTopRightRadius: b.siguePorDerecha ? 0 : "0.25rem",
                     borderBottomRightRadius: b.siguePorDerecha ? 0 : "0.25rem",
+                    outline: correcciones?.get(b.torneo.id)?.length
+                      ? "2px dashed rgba(255,255,255,0.9)"
+                      : undefined,
+                    outlineOffset: "-2px",
                   }}
                   className="mx-px px-1.5 py-0.5 text-[11px] leading-tight text-white
                              truncate text-left hover:opacity-85"
                 >
                   {b.siguePorIzquierda ? "↩ " : ""}
+                  {correcciones?.get(b.torneo.id)?.length ? "✎ " : ""}
                   {b.torneo.nombre}
                 </button>
               ))}
@@ -205,9 +223,16 @@ export function CalendarioTorneos({ torneos }: { torneos: TorneoCalendario[] }) 
 
       <p className="mt-3 text-sm text-texto-suave text-center">
         Tocá un torneo para ver los detalles.
+        {[...(correcciones?.values() ?? [])].some((c) => c.length > 0) && (
+          <> Los marcados con ✎ tienen una corrección esperando aval.</>
+        )}
       </p>
 
-      <ModalTorneo torneo={abierto} alCerrar={() => setAbierto(null)} />
+      <ModalTorneo
+        torneo={abierto}
+        correcciones={abierto ? correcciones?.get(abierto.id) : undefined}
+        alCerrar={() => setAbiertoId(null)}
+      />
     </div>
   );
 }

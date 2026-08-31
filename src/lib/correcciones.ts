@@ -111,3 +111,46 @@ export function diferencias(
   }
   return cambios;
 }
+
+/**
+ * Una corrección ya lista para dibujar.
+ *
+ * El "antes → después" se arma en el servidor y viaja como texto: el cliente
+ * no tiene por qué saber que una federación es un id ni que un club es un
+ * uuid, y así la ficha del torneo no necesita cargar tablas de nombres sólo
+ * para mostrar un cambio.
+ */
+export type CambioVisible = {
+  campo: string;
+  etiqueta: string;
+  antes: string;
+  despues: string;
+};
+
+export type CorreccionVisible = {
+  id: string;
+  motivo: string | null;
+  avales: number;
+  faltan: number;
+  esMia: boolean;
+  yaAvale: boolean;
+  puedeAvalar: boolean;
+};
+
+export type CorreccionConCambios = CorreccionVisible & {
+  cambios: CambioVisible[];
+};
+
+/** Arma el "antes → después" de una corrección contra la fila que hay hoy. */
+export function cambiosVisibles(
+  campos: Record<string, unknown>,
+  actual: Record<string, unknown> | undefined,
+  nombresDeSala?: Map<string, string>,
+): CambioVisible[] {
+  return Object.entries(campos).map(([campo, nuevo]) => ({
+    campo,
+    etiqueta: etiquetaCampo(campo),
+    antes: mostrarValor(campo, actual?.[campo], nombresDeSala),
+    despues: mostrarValor(campo, nuevo, nombresDeSala),
+  }));
+}
