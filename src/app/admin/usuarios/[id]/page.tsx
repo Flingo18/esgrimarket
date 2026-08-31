@@ -7,7 +7,6 @@ import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ROLES } from "@/lib/roles";
 import { urlFoto } from "@/lib/publicaciones";
-import { ESTADOS } from "@/lib/taxonomy";
 import { etiquetaZonas } from "@/lib/geo";
 
 import { AccionesCuenta, BajarPublicacion } from "./cliente";
