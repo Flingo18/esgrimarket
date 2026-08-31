@@ -71,6 +71,92 @@ export async function proponerTorneo(
   return { ok: "Listo, quedó enviado. Lo revisamos y lo publicamos." };
 }
 
+/**
+ * Edita un torneo. Sólo admins.
+ *
+ * Hace falta sobre todo por las fechas: se reprograman seguido y sin esto
+ * había que corregirlas tocando la base a mano.
+ */
+export async function actualizarTorneo(
+  _previo: EstadoTorneo,
+  datos: FormData,
+): Promise<EstadoTorneo> {
+  const supabase = await crearClienteServidor();
+  const { data: esAdmin } = await supabase.rpc("es_admin");
+  if (!esAdmin) return { error: "No tenés permiso." };
+
+  const id = String(datos.get("id") ?? "");
+  if (!id) return { error: "Falta el torneo." };
+
+  const texto = (k: string) => {
+    const v = datos.get(k);
+    return typeof v === "string" && v.trim() ? v.trim() : null;
+  };
+
+  const nombre = texto("nombre");
+  if (!nombre || nombre.length < 3) return { error: "Poné el nombre del torneo." };
+
+  const organizador = texto("organizador_tipo") === "club" ? "club" : "federacion";
+  const federacion = organizador === "federacion" ? texto("federacion") : null;
+  const salaId = organizador === "club" ? texto("sala_id") : null;
+
+  if (organizador === "federacion" && (!federacion || !(federacion in FEDERACIONES))) {
+    return { error: "Elegí la federación que lo organiza." };
+  }
+  if (organizador === "club" && !salaId) {
+    return { error: "Elegí el club que lo organiza." };
+  }
+
+  const inicio = texto("fecha_inicio");
+  const fin = texto("fecha_fin");
+  if (fin && inicio && fin < inicio) {
+    return { error: "La fecha de fin no puede ser anterior a la de inicio." };
+  }
+
+  const admin = crearClienteAdmin();
+  const { error } = await admin
+    .from("torneos")
+    .update({
+      nombre,
+      organizador_tipo: organizador,
+      federacion,
+      sala_id: salaId,
+      fecha_inicio: inicio,
+      fecha_fin: fin,
+      cierre_inscripcion: texto("cierre_inscripcion"),
+      lugar: texto("lugar"),
+      contacto_inscripcion: texto("contacto_inscripcion"),
+      notas: texto("notas"),
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error actualizando torneo:", error.message);
+    return { error: "No pudimos guardar los cambios." };
+  }
+
+  revalidatePath("/torneos");
+  revalidatePath("/admin");
+  redirect("/admin?torneo=guardado");
+}
+
+/** Borra un torneo. Definitivo. */
+export async function borrarTorneo(datos: FormData) {
+  const supabase = await crearClienteServidor();
+  const { data: esAdmin } = await supabase.rpc("es_admin");
+  if (!esAdmin) return;
+
+  const id = String(datos.get("id") ?? "");
+  if (!id) return;
+
+  const admin = crearClienteAdmin();
+  await admin.from("torneos").delete().eq("id", id);
+
+  revalidatePath("/torneos");
+  revalidatePath("/admin");
+  redirect("/admin?torneo=borrado");
+}
+
 /** Aprueba o rechaza un torneo propuesto. Sólo admins. */
 export async function moderarTorneo(
   _previo: EstadoTorneo,

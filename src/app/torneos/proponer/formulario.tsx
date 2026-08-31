@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 
-import { proponerTorneo } from "@/acciones/torneos";
+import { actualizarTorneo, proponerTorneo } from "@/acciones/torneos";
 import { FEDERACIONES } from "@/lib/torneos";
 
 const CAMPO =
@@ -29,10 +29,34 @@ function Campo({
 
 type Sala = { id: string; nombre: string };
 
-export function FormularioTorneo({ salas }: { salas: Sala[] }) {
-  const [estado, accion, enviando] = useActionState(proponerTorneo, {});
+export type TorneoEditable = {
+  id: string;
+  nombre: string;
+  organizador_tipo: string;
+  federacion: string | null;
+  sala_id: string | null;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  cierre_inscripcion: string | null;
+  lugar: string | null;
+  contacto_inscripcion: string | null;
+  notas: string | null;
+};
+
+export function FormularioTorneo({
+  salas,
+  inicial,
+}: {
+  salas: Sala[];
+  inicial?: TorneoEditable;
+}) {
+  const editando = Boolean(inicial);
+  const [estado, accion, enviando] = useActionState(
+    editando ? actualizarTorneo : proponerTorneo,
+    {},
+  );
   const [organizador, setOrganizador] = useState<"federacion" | "club">(
-    "federacion",
+    inicial?.organizador_tipo === "club" ? "club" : "federacion",
   );
 
   if (estado.ok) {
@@ -45,8 +69,16 @@ export function FormularioTorneo({ salas }: { salas: Sala[] }) {
 
   return (
     <form action={accion} className="space-y-5">
+      {inicial && <input type="hidden" name="id" value={inicial.id} />}
+
       <Campo etiqueta="Nombre del torneo">
-        <input name="nombre" required maxLength={140} className={CAMPO} />
+        <input
+          name="nombre"
+          required
+          maxLength={140}
+          defaultValue={inicial?.nombre ?? ""}
+          className={CAMPO}
+        />
       </Campo>
 
       <Campo etiqueta="¿Quién lo organiza?">
@@ -74,7 +106,12 @@ export function FormularioTorneo({ salas }: { salas: Sala[] }) {
 
       {organizador === "federacion" ? (
         <Campo etiqueta="Federación">
-          <select name="federacion" required defaultValue="" className={CAMPO}>
+          <select
+            name="federacion"
+            required
+            defaultValue={inicial?.federacion ?? ""}
+            className={CAMPO}
+          >
             <option value="">Elegí una…</option>
             {Object.entries(FEDERACIONES).map(([id, nombre]) => (
               <option key={id} value={id}>{nombre}</option>
@@ -86,7 +123,12 @@ export function FormularioTorneo({ salas }: { salas: Sala[] }) {
           etiqueta="Club organizador"
           ayuda="Salen del mapa de salas. Si falta el club, agregalo primero desde el mapa."
         >
-          <select name="sala_id" required defaultValue="" className={CAMPO}>
+          <select
+            name="sala_id"
+            required
+            defaultValue={inicial?.sala_id ?? ""}
+            className={CAMPO}
+          >
             <option value="">Elegí uno…</option>
             {salas.map((s) => (
               <option key={s.id} value={s.id}>{s.nombre}</option>
@@ -97,10 +139,20 @@ export function FormularioTorneo({ salas }: { salas: Sala[] }) {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <Campo etiqueta="Fecha de inicio" ayuda="Dejala vacía si todavía no se confirmó.">
-          <input name="fecha_inicio" type="date" className={CAMPO} />
+          <input
+            name="fecha_inicio"
+            type="date"
+            defaultValue={inicial?.fecha_inicio ?? ""}
+            className={CAMPO}
+          />
         </Campo>
         <Campo etiqueta="Fecha de fin" ayuda="Sólo si dura más de un día.">
-          <input name="fecha_fin" type="date" className={CAMPO} />
+          <input
+            name="fecha_fin"
+            type="date"
+            defaultValue={inicial?.fecha_fin ?? ""}
+            className={CAMPO}
+          />
         </Campo>
       </div>
 
@@ -108,11 +160,21 @@ export function FormularioTorneo({ salas }: { salas: Sala[] }) {
         etiqueta="Cierre de inscripción"
         ayuda="Es el dato que más se busca: la app avisa cuando faltan pocos días."
       >
-        <input name="cierre_inscripcion" type="date" className={CAMPO} />
+        <input
+          name="cierre_inscripcion"
+          type="date"
+          defaultValue={inicial?.cierre_inscripcion ?? ""}
+          className={CAMPO}
+        />
       </Campo>
 
       <Campo etiqueta="Lugar" ayuda="Ej: CeNARD, Ciudad de Buenos Aires.">
-        <input name="lugar" maxLength={140} className={CAMPO} />
+        <input
+          name="lugar"
+          maxLength={140}
+          defaultValue={inicial?.lugar ?? ""}
+          className={CAMPO}
+        />
       </Campo>
 
       <Campo
@@ -122,13 +184,20 @@ export function FormularioTorneo({ salas }: { salas: Sala[] }) {
         <input
           name="contacto_inscripcion"
           maxLength={200}
+          defaultValue={inicial?.contacto_inscripcion ?? ""}
           placeholder="https://…  ·  inscripciones@club.com  ·  11 1234-5678"
           className={CAMPO}
         />
       </Campo>
 
       <Campo etiqueta="Notas" ayuda="Obligatoriedad, categorías, lo que haga falta aclarar.">
-        <textarea name="notas" rows={3} maxLength={500} className={CAMPO} />
+        <textarea
+          name="notas"
+          rows={3}
+          maxLength={500}
+          defaultValue={inicial?.notas ?? ""}
+          className={CAMPO}
+        />
       </Campo>
 
       {estado.error && (
@@ -142,7 +211,11 @@ export function FormularioTorneo({ salas }: { salas: Sala[] }) {
         disabled={enviando}
         className="w-full rounded-lg bg-acento text-acento-texto font-medium py-3 hover:opacity-90 disabled:opacity-50"
       >
-        {enviando ? "Enviando…" : "Proponer el torneo"}
+        {enviando
+          ? "Guardando…"
+          : editando
+            ? "Guardar cambios"
+            : "Proponer el torneo"}
       </button>
     </form>
   );

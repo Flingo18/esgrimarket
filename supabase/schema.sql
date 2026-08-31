@@ -186,6 +186,12 @@ drop trigger if exists trg_perfil_actualizado on perfiles;
 create trigger trg_perfil_actualizado before update on perfiles
   for each row execute function tocar_actualizado_en();
 
+-- El calendario muestra "información actualizada hace X": ese texto sólo
+-- vale si la fecha se toca sola cuando se corrige un torneo.
+drop trigger if exists trg_torneo_actualizado on torneos;
+create trigger trg_torneo_actualizado before update on torneos
+  for each row execute function tocar_actualizado_en();
+
 -- Crea el perfil apenas se registra el usuario, así nunca hay una sesión
 -- activa sin fila en perfiles.
 create or replace function crear_perfil_para_usuario()

@@ -8,6 +8,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { FilaUsuario } from "./fila";
 import { FilaSalaPendiente, type SalaPendiente } from "./salas";
 import { FilaTorneoPendiente, type TorneoPendiente } from "./torneos";
+import { nombreOrganizador } from "@/lib/torneos";
 
 export const metadata: Metadata = { title: "Administración" };
 
@@ -35,6 +36,12 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
       admin.from("perfiles").select("id, nombre, rol, rol_hasta, telefono_visible, suspendido"),
       admin.from("publicaciones").select("id", { count: "exact", head: true }),
     ]);
+
+  const { data: todosLosTorneos } = await admin
+    .from("torneos")
+    .select("id, nombre, fecha_inicio, fecha_fin, federacion, salas(nombre)")
+    .eq("situacion", "aprobado")
+    .order("fecha_inicio", { ascending: true, nullsFirst: false });
 
   const { data: todasLasSalas } = await admin
     .from("salas")
@@ -64,6 +71,18 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
     conteo.set(p.autor_id, (conteo.get(p.autor_id) ?? 0) + 1);
   }
 
+  // Dos tercios del calendario ya pasaron. Lo que se edita es lo que viene
+  // — sobre todo fechas reprogramadas — así que eso va arriba y el archivo
+  // queda plegado abajo.
+  const hoy = new Date().toISOString().slice(0, 10);
+  const terminado = (t: { fecha_inicio: string | null; fecha_fin: string | null }) => {
+    const ultimo = t.fecha_fin ?? t.fecha_inicio;
+    return ultimo !== null && ultimo < hoy;
+  };
+
+  const torneosProximos = (todosLosTorneos ?? []).filter((t) => !terminado(t));
+  const torneosPasados = (todosLosTorneos ?? []).filter(terminado).reverse();
+
   const porId = new Map((perfiles ?? []).map((p) => [p.id, p]));
 
   const filas = (usuarios?.users ?? [])
@@ -92,7 +111,11 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         <p className="mt-4 rounded-lg border border-precio/40 bg-precio/10 px-3 py-2 text-sm text-precio">
           {resultadoTorneo === "aprobado"
             ? "Torneo aprobado. Ya está en el calendario."
-            : "Torneo rechazado. No se publica."}
+            : resultadoTorneo === "guardado"
+              ? "Cambios guardados."
+              : resultadoTorneo === "borrado"
+                ? "Torneo borrado."
+                : "Torneo rechazado. No se publica."}
         </p>
       )}
 
@@ -157,6 +180,34 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
 
       <div className="mt-10 flex items-baseline justify-between gap-4">
         <h2 className="text-lg font-semibold">
+          Torneos ({torneosProximos.length})
+        </h2>
+        <Link href="/torneos/proponer" className="text-sm text-acento underline">
+          Agregar uno
+        </Link>
+      </div>
+
+      <ul className="mt-3 space-y-2">
+        {torneosProximos.map((t) => (
+          <FilaTorneo key={t.id} torneo={t} />
+        ))}
+      </ul>
+
+      {torneosPasados.length > 0 && (
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm text-texto-suave hover:text-texto">
+            Ver los {torneosPasados.length} que ya pasaron
+          </summary>
+          <ul className="mt-3 space-y-2">
+            {torneosPasados.map((t) => (
+              <FilaTorneo key={t.id} torneo={t} />
+            ))}
+          </ul>
+        </details>
+      )}
+
+      <div className="mt-10 flex items-baseline justify-between gap-4">
+        <h2 className="text-lg font-semibold">
           Salas ({todasLasSalas?.length ?? 0})
         </h2>
         <Link href="/salas/proponer" className="text-sm text-acento underline">
@@ -201,5 +252,36 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         ))}
       </ul>
     </div>
+  );
+}
+
+function FilaTorneo({
+  torneo,
+}: {
+  torneo: {
+    id: string;
+    nombre: string;
+    fecha_inicio: string | null;
+    federacion: string | null;
+    salas: { nombre: string } | null;
+  };
+}) {
+  return (
+    <li className="rounded-xl border border-borde bg-fondo-elevado p-3 flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="font-medium truncate">{torneo.nombre}</p>
+        <p className="text-xs text-texto-suave">
+          {torneo.fecha_inicio ?? "sin fecha"}
+          {" · "}
+          {nombreOrganizador(torneo.federacion, torneo.salas?.nombre)}
+        </p>
+      </div>
+      <Link
+        href={`/admin/torneos/${torneo.id}`}
+        className="shrink-0 rounded-lg border border-borde px-3 py-1.5 text-sm hover:border-acento"
+      >
+        Editar
+      </Link>
+    </li>
   );
 }
