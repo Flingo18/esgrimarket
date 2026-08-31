@@ -32,7 +32,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
   const [{ data: usuarios }, { data: perfiles }, { count: publicaciones }] =
     await Promise.all([
       admin.auth.admin.listUsers({ perPage: 200 }),
-      admin.from("perfiles").select("id, nombre, rol, rol_hasta, telefono_visible"),
+      admin.from("perfiles").select("id, nombre, rol, rol_hasta, telefono_visible, suspendido"),
       admin.from("publicaciones").select("id", { count: "exact", head: true }),
     ]);
 
@@ -75,6 +75,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         nombre: perfil?.nombre ?? "",
         rol: (perfil?.rol ?? "regular") as "admin" | "pro" | "regular",
         telefono: perfil?.telefono_visible ?? null,
+        suspendido: perfil?.suspendido ?? false,
         activas: conteo.get(u.id) ?? 0,
         alta: u.created_at,
       };

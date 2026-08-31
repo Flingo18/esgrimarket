@@ -29,6 +29,8 @@ export type Database = {
           barrio: string | null;
           rol: string;
           rol_hasta: string | null;
+          suspendido: boolean;
+          motivo_suspension: string | null;
           creado_en: string;
           actualizado_en: string;
         };
@@ -42,6 +44,8 @@ export type Database = {
           barrio?: string | null;
           rol?: string;
           rol_hasta?: string | null;
+          suspendido?: boolean;
+          motivo_suspension?: string | null;
           creado_en?: string;
           actualizado_en?: string;
         };
