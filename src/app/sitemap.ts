@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { crearClienteServidor } from "@/lib/supabase/server";
 
-const SITIO = process.env.NEXT_PUBLIC_SITE_URL ?? "https://esgrimarket.vercel.app";
+const SITIO = process.env.NEXT_PUBLIC_SITE_URL ?? "https://esgrimarket.com.ar";
 
 /**
  * Le dice a Google qué páginas existen sin que tenga que descubrirlas

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITIO = process.env.NEXT_PUBLIC_SITE_URL ?? "https://esgrimarket.vercel.app";
+const SITIO = process.env.NEXT_PUBLIC_SITE_URL ?? "https://esgrimarket.com.ar";
 
 /**
  * Sin esto los buscadores tienen que adivinar qué mirar, y no encuentran el
