@@ -10,7 +10,7 @@ import { formatearARS, formatearUSD } from "@/lib/dolar";
 
 import type { NuevaFila } from "@/lib/supabase/database.types";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { normalizarTelefono } from "@/lib/whatsapp";
+import { PAIS_POR_DEFECTO, esPais, normalizarTelefono, type PaisId } from "@/lib/whatsapp";
 import {
   ESTADOS,
   MANOS,
@@ -149,9 +149,10 @@ async function asegurarTelefono(
   supabase: Awaited<ReturnType<typeof crearClienteServidor>>,
   userId: string,
   crudo: string | null,
+  pais: PaisId = PAIS_POR_DEFECTO,
 ): Promise<EstadoPublicacion | null> {
   if (crudo) {
-    const tel = normalizarTelefono(crudo);
+    const tel = normalizarTelefono(crudo, pais);
     if (!tel.ok) return { error: tel.error, campo: "telefono" };
 
     await supabase
@@ -196,10 +197,12 @@ export async function crearPublicacion(
   const parsed = parsear(datos);
   if ("error" in parsed) return parsed.error;
 
+  const paisCrudo = datos.get("pais");
   const falta = await asegurarTelefono(
     supabase,
     user.id,
     typeof datos.get("telefono") === "string" ? String(datos.get("telefono")).trim() : null,
+    esPais(paisCrudo) ? paisCrudo : PAIS_POR_DEFECTO,
   );
   if (falta) return falta;
 

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { CambioFila } from "@/lib/supabase/database.types";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
-import { normalizarTelefono } from "@/lib/whatsapp";
+import { PAIS_POR_DEFECTO, esPais, normalizarTelefono } from "@/lib/whatsapp";
 import { ROLES, type Rol } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
@@ -135,7 +135,11 @@ export async function editarPerfilAjeno(
   const cambios: CambioFila<"perfiles"> = { nombre };
 
   if (telefonoCrudo) {
-    const tel = normalizarTelefono(telefonoCrudo);
+    const paisCrudo = datos.get("pais");
+    const tel = normalizarTelefono(
+      telefonoCrudo,
+      esPais(paisCrudo) ? paisCrudo : PAIS_POR_DEFECTO,
+    );
     if (!tel.ok) return { error: tel.error };
     cambios.telefono_e164 = tel.e164;
     cambios.telefono_visible = tel.visible;

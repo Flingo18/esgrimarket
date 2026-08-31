@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { AvisoTorneos } from "./aviso-torneos";
+import { SITIO_FEDERACION } from "@/lib/torneos";
 import {
   colorFederacion,
   nombreOrganizador,
@@ -57,6 +59,7 @@ export function ModalTorneo({
 
   const contacto = interpretarContacto(torneo.contacto_inscripcion);
   const dias = torneo.cierre_inscripcion ? diasHasta(torneo.cierre_inscripcion) : null;
+  const sitio = torneo.federacion ? SITIO_FEDERACION[torneo.federacion] : undefined;
 
   return (
     <div
@@ -140,10 +143,34 @@ export function ModalTorneo({
         </div>
 
         {/* Las fechas se reprograman seguido: saber cuándo se tocó por última
-            vez es lo que permite confiar —o no— en lo que dice la ficha. */}
-        <p className="mt-5 pt-3 border-t border-borde text-xs text-texto-suave">
-          Información actualizada {haceCuanto(torneo.actualizado_en)}
-        </p>
+            vez es lo que permite confiar —o no— en lo que dice la ficha. Y si
+            está mal, el arreglo tiene que estar acá mismo: si hay que ir a
+            buscar dónde avisar, nadie avisa. */}
+        <div className="mt-5 pt-3 border-t border-borde space-y-2">
+          <AvisoTorneos compacto />
+          {sitio && (
+            <a
+              href={sitio}
+              target="_blank"
+              rel="noreferrer"
+              className="block text-xs text-acento underline"
+            >
+              Ver la página oficial de la federación
+            </a>
+          )}
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-texto-suave">
+            Información actualizada {haceCuanto(torneo.actualizado_en)}
+          </p>
+          <a
+            href={`/torneos/${torneo.id}/corregir`}
+            className="text-xs text-acento underline"
+          >
+            ¿Hay algo mal? Corregilo
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -43,14 +43,23 @@ export type TorneoEditable = {
   notas: string | null;
 };
 
+/**
+ * El mismo formulario sirve para cargar un torneo, para editarlo y para
+ * proponerle una corrección. `puedeEditar` sólo cambia lo que dice el botón
+ * y si se pide un motivo: quién guarda directo y quién propone lo decide el
+ * servidor, no esta pantalla.
+ */
 export function FormularioTorneo({
   salas,
   inicial,
+  puedeEditar = true,
 }: {
   salas: Sala[];
   inicial?: TorneoEditable;
+  puedeEditar?: boolean;
 }) {
   const editando = Boolean(inicial);
+  const sugiriendo = editando && !puedeEditar;
   const [estado, accion, enviando] = useActionState(
     editando ? actualizarTorneo : proponerTorneo,
     {},
@@ -200,6 +209,20 @@ export function FormularioTorneo({
         />
       </Campo>
 
+      {sugiriendo && (
+        <Campo
+          etiqueta="¿De dónde sacaste el dato?"
+          ayuda="Opcional, pero es lo que mira el que va a avalar la corrección. Un link a la circular o al posteo alcanza."
+        >
+          <input
+            name="motivo"
+            maxLength={200}
+            placeholder="Lo publicó la FECBA el martes"
+            className={CAMPO}
+          />
+        </Campo>
+      )}
+
       {estado.error && (
         <p className="rounded-lg border border-alerta/40 bg-alerta/10 px-3 py-2 text-sm text-alerta">
           {estado.error}
@@ -213,9 +236,11 @@ export function FormularioTorneo({
       >
         {enviando
           ? "Guardando…"
-          : editando
-            ? "Guardar cambios"
-            : "Proponer el torneo"}
+          : sugiriendo
+            ? "Proponer la corrección"
+            : editando
+              ? "Guardar cambios"
+              : "Proponer el torneo"}
       </button>
     </form>
   );

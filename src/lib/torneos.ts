@@ -21,6 +21,18 @@ export const FEDERACIONES = {
 export type FederacionId = keyof typeof FEDERACIONES;
 
 /** Nombre corto, para las insignias donde no entra el completo. */
+/**
+ * Página oficial de cada federación.
+ *
+ * Sólo están las dos que aparecen en los propios datos del calendario. Las
+ * demás quedan sin link a propósito: mandar a alguien a una dirección
+ * inventada es peor que no darle ninguna.
+ */
+export const SITIO_FEDERACION: Record<string, string> = {
+  fae: "https://www.esgrima-fae.com.ar/",
+  fecba: "https://fecba.org/",
+};
+
 export const FEDERACION_CORTA: Record<string, string> = {
   fae: "FAE",
   fecba: "FECBA",

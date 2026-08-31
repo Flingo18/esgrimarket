@@ -37,6 +37,10 @@ export default async function PaginaProponerTorneo() {
         ¿Falta una fecha en el calendario? Cargala acá. La revisamos antes de
         publicarla, para que no queden fechas equivocadas dando vueltas.
       </p>
+      <p className="mt-3 text-sm text-texto-suave">
+        Copiá los datos de la circular o de la página de la federación, no de
+        memoria: esto lo va a leer gente que arma un viaje con esa fecha.
+      </p>
 
       {propios && propios.length > 0 && (
         <ul className="mt-6 space-y-2">

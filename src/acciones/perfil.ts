@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { CambioFila } from "@/lib/supabase/database.types";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { normalizarTelefono } from "@/lib/whatsapp";
+import { PAIS_POR_DEFECTO, esPais, normalizarTelefono } from "@/lib/whatsapp";
 
 export type EstadoPerfil = { error?: string; ok?: boolean };
 
@@ -41,7 +41,11 @@ export async function guardarPerfil(
   };
 
   if (telefonoCrudo) {
-    const tel = normalizarTelefono(telefonoCrudo);
+    const paisCrudo = datos.get("pais");
+    const tel = normalizarTelefono(
+      telefonoCrudo,
+      esPais(paisCrudo) ? paisCrudo : PAIS_POR_DEFECTO,
+    );
     if (!tel.ok) return { error: tel.error };
     cambios.telefono_e164 = tel.e164;
     cambios.telefono_visible = tel.visible;

@@ -77,6 +77,7 @@ export type Database = {
           zona: string | null;
           nota: string | null;
           creado_en: string;
+          actualizado_en: string;
         };
         Insert: {
           id?: string;
@@ -94,6 +95,7 @@ export type Database = {
           zona?: string | null;
           nota?: string | null;
           creado_en?: string;
+          actualizado_en?: string;
         };
         Update: Partial<Database["public"]["Tables"]["salas"]["Insert"]>;
         Relationships: [];
@@ -306,6 +308,56 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["busquedas"]["Insert"]>;
         Relationships: [];
       };
+      correcciones: {
+        Row: {
+          id: string;
+          tabla: string;
+          fila_id: string;
+          campos: Record<string, unknown>;
+          motivo: string | null;
+          propuesta_por: string;
+          situacion: string;
+          nota_sistema: string | null;
+          creado_en: string;
+          resuelto_en: string | null;
+        };
+        Insert: {
+          id?: string;
+          tabla: string;
+          fila_id: string;
+          campos: Record<string, unknown>;
+          motivo?: string | null;
+          propuesta_por: string;
+          situacion?: string;
+          nota_sistema?: string | null;
+          creado_en?: string;
+          resuelto_en?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["correcciones"]["Insert"]>;
+        Relationships: [];
+      };
+      correcciones_votos: {
+        Row: {
+          correccion_id: string;
+          usuario_id: string;
+          creado_en: string;
+        };
+        Insert: {
+          correccion_id: string;
+          usuario_id: string;
+          creado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["correcciones_votos"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "correcciones_votos_correccion_id_fkey";
+            columns: ["correccion_id"];
+            isOneToOne: false;
+            referencedRelation: "correcciones";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       cotizacion_cache: {
         Row: { id: boolean; venta: number; fuente: string; actualizado: string };
         Insert: { id?: boolean; venta: number; fuente: string; actualizado?: string };
@@ -323,6 +375,10 @@ export type Database = {
       limite_efectivo: { Args: { usuario: string }; Returns: number };
       /** Admins y cuentas pagas: son los únicos que pueden publicar con stock. */
       puede_cargar_stock: { Args: Record<never, never>; Returns: boolean };
+      /** Cuántos avales hacen falta para que una corrección se aplique sola. */
+      votos_para_aplicar: { Args: Record<never, never>; Returns: number };
+      /** Escribe una corrección sobre la fila. Sólo service role o el trigger. */
+      aplicar_correccion: { Args: { c_id: string }; Returns: boolean };
       /** Sólo la llama el cron, con la service role key. */
       vencer_publicaciones: { Args: Record<never, never>; Returns: number };
       /** Sólo la llama el cron, con la service role key. */

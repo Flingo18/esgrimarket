@@ -83,6 +83,11 @@ export async function TorneosProximos() {
           );
         })}
       </ul>
+
+      <p className="mt-3 text-xs text-texto-suave">
+        Fechas cargadas por la comunidad, no por las federaciones. Confirmalas
+        siempre en la página oficial de quien organiza.
+      </p>
     </section>
   );
 }

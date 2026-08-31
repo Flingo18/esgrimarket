@@ -4,6 +4,29 @@ import { cerrarSesion } from "@/acciones/auth";
 import { Logo } from "@/components/logo";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
+/** Correcciones que esta persona todavía puede avalar. */
+async function porAvalar(
+  supabase: Awaited<ReturnType<typeof crearClienteServidor>>,
+  usuario: string,
+): Promise<number> {
+  const { data: abiertas } = await supabase
+    .from("correcciones")
+    .select("id")
+    .eq("situacion", "pendiente")
+    .neq("propuesta_por", usuario);
+
+  if (!abiertas?.length) return 0;
+
+  const { data: mios } = await supabase
+    .from("correcciones_votos")
+    .select("correccion_id")
+    .eq("usuario_id", usuario)
+    .in("correccion_id", abiertas.map((c) => c.id));
+
+  const yaVotadas = new Set((mios ?? []).map((v) => v.correccion_id));
+  return abiertas.filter((c) => !yaVotadas.has(c.id)).length;
+}
+
 export async function Encabezado() {
   const supabase = await crearClienteServidor();
   const {
@@ -13,6 +36,11 @@ export async function Encabezado() {
   const { data: esAdmin } = user
     ? await supabase.rpc("es_admin")
     : { data: false };
+
+  // El contador es lo que hace que alguien entre a avalar: una cola escondida
+  // no la drena nadie. Sólo cuenta lo que esta persona todavía puede avalar,
+  // porque un número que no baja cuando hacés algo deja de significar nada.
+  const pendientes = user ? await porAvalar(supabase, user.id) : 0;
 
   return (
     <header className="border-b border-borde sticky top-0 z-40 bg-fondo/90 backdrop-blur">
@@ -47,6 +75,17 @@ export async function Encabezado() {
               className="text-sm text-texto-suave hover:text-texto hidden sm:block"
             >
               Mis publicaciones
+            </Link>
+            <Link
+              href="/correcciones"
+              className="text-sm text-texto-suave hover:text-texto hidden sm:block"
+            >
+              Correcciones
+              {pendientes > 0 && (
+                <span className="ml-1 rounded-full bg-acento text-acento-texto text-xs px-1.5">
+                  {pendientes}
+                </span>
+              )}
             </Link>
             <Link
               href="/cuenta"

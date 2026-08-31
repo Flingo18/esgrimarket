@@ -5,6 +5,8 @@ import { useActionState, useState } from "react";
 import { guardarPerfil } from "@/acciones/perfil";
 import { ZONAS } from "@/lib/geo";
 import { SelectorZonas } from "@/components/selector-zonas";
+import { CampoTelefono } from "@/components/campo-telefono";
+import type { PaisId } from "@/lib/whatsapp";
 
 const CAMPO =
   "w-full rounded-lg border border-borde bg-fondo-elevado px-3 py-2.5 " +
@@ -15,6 +17,7 @@ type Sala = { id: string; nombre: string; barrio: string | null };
 export function FormularioPerfil({
   nombre,
   telefono,
+  pais,
   salaId,
   salas,
   zonas: zonasIniciales,
@@ -22,6 +25,7 @@ export function FormularioPerfil({
 }: {
   nombre: string;
   telefono: string;
+  pais: PaisId;
   salaId: string;
   salas: Sala[];
   zonas: string[];
@@ -50,18 +54,14 @@ export function FormularioPerfil({
         <label htmlFor="telefono" className="block text-sm font-medium mb-1.5">
           Tu WhatsApp
         </label>
-        <input
-          id="telefono"
-          name="telefono"
-          type="tel"
-          defaultValue={telefono}
-          placeholder="11 1234-5678"
+        <CampoTelefono
+          valorInicial={telefono}
+          paisInicial={pais}
           className={CAMPO}
         />
         <p className="text-xs text-texto-suave mt-1">
           Se carga una sola vez y se usa en todas tus publicaciones. Nunca se
-          muestra en la página: aparece detrás de un botón. Escribilo sin el 0
-          y sin el 15.
+          muestra en la página: aparece detrás de un botón.
         </p>
       </div>
 

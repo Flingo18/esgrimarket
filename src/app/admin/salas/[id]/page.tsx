@@ -46,7 +46,7 @@ export default async function PaginaEditarSala({
       </p>
 
       <div className="mt-8">
-        <FormularioSala inicial={sala as SalaEditable} />
+        <FormularioSala esAdmin inicial={sala as SalaEditable} />
       </div>
 
       <div className="mt-12 pt-6 border-t border-borde">

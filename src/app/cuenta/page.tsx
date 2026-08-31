@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { ROLES } from "@/lib/roles";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { paisDeE164 } from "@/lib/whatsapp";
 
 import { BorrarCuenta } from "@/components/borrar-cuenta";
 
@@ -24,7 +25,7 @@ export default async function PaginaCuenta() {
   const [{ data: perfil }, { data: salas }, { count: activas }] = await Promise.all([
     supabase
       .from("perfiles")
-      .select("nombre, telefono_visible, sala_id, rol, rol_hasta, zonas_entrega, barrio")
+      .select("nombre, telefono_visible, telefono_e164, sala_id, rol, rol_hasta, zonas_entrega, barrio")
       .eq("id", user.id)
       .single(),
     supabase.from("salas").select("id, nombre, barrio").order("nombre"),
@@ -63,6 +64,7 @@ export default async function PaginaCuenta() {
         <FormularioPerfil
           nombre={perfil?.nombre ?? ""}
           telefono={perfil?.telefono_visible ?? ""}
+          pais={paisDeE164(perfil?.telefono_e164)}
           salaId={perfil?.sala_id ?? ""}
           salas={salas ?? []}
           zonas={perfil?.zonas_entrega ?? []}

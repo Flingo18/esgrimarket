@@ -44,7 +44,14 @@ create table if not exists salas (
   sitio_web   text,
   instagram   text,
   activa      boolean not null default true,
-  creado_en   timestamptz not null default now()
+  -- La comunidad puede proponer salas; no salen al mapa hasta aprobarlas.
+  situacion   text not null default 'aprobada'
+              check (situacion in ('pendiente', 'aprobada', 'rechazada')),
+  propuesta_por uuid references auth.users(id) on delete set null,
+  zona        text,
+  nota        text,
+  creado_en   timestamptz not null default now(),
+  actualizado_en timestamptz not null default now()
 );
 
 alter table perfiles
@@ -169,6 +176,84 @@ create table if not exists cotizacion_cache (
   actualizado   timestamptz not null default now()
 );
 
+-- ─────────────────────────────── Torneos ────────────────────────────
+
+-- Calendario de la comunidad. Las fechas se reprograman seguido, así que
+-- `actualizado_en` no es metadato: se muestra en la ficha, y es lo que
+-- permite decidir si confiar en lo que dice.
+create table if not exists torneos (
+  id                   uuid primary key default gen_random_uuid(),
+  nombre               text not null check (char_length(nombre) between 3 and 140),
+
+  -- Lo organiza una federación de la lista cerrada, o un club del mapa.
+  -- Nunca las dos cosas, nunca ninguna.
+  organizador_tipo     text not null default 'federacion'
+                       check (organizador_tipo in ('federacion', 'club')),
+  federacion           text,
+  sala_id              uuid references salas(id) on delete set null,
+
+  fecha_inicio         date,
+  fecha_fin            date,
+  cierre_inscripcion   date,
+  lugar                text,
+  zona                 text,
+  -- Un link, un mail o un teléfono: la interfaz decide qué botón mostrar.
+  contacto_inscripcion text,
+  notas                text,
+
+  situacion            text not null default 'pendiente'
+                       check (situacion in ('pendiente', 'aprobado', 'rechazado')),
+  propuesto_por        uuid references auth.users(id) on delete set null,
+  creado_en            timestamptz not null default now(),
+  actualizado_en       timestamptz not null default now(),
+
+  constraint torneos_fechas_coherentes
+    check (fecha_fin is null or fecha_inicio is null or fecha_fin >= fecha_inicio),
+  constraint torneos_organizador_coherente
+    check ((organizador_tipo = 'federacion' and sala_id is null)
+        or (organizador_tipo = 'club' and federacion is null))
+);
+
+-- ───────────────────────── Correcciones ─────────────────────────────
+--
+-- Quien cargó una entrada la edita directo. Cualquier otro propone una
+-- corrección, y con tres avales se aplica sola. Es lo que evita que cada
+-- fecha reprogramada tenga que pasar por el admin.
+--
+-- El detalle de las funciones y el trigger vive en las migraciones
+-- `correcciones_de_la_comunidad` y `correccion_no_rompe_el_voto`.
+
+create table if not exists correcciones (
+  id            uuid primary key default gen_random_uuid(),
+  tabla         text not null check (tabla in ('torneos', 'salas')),
+  fila_id       uuid not null,
+  -- Sólo lo que cambia. Una clave presente en null borra el dato; una clave
+  -- ausente lo deja como está.
+  campos        jsonb not null,
+  motivo        text,
+  propuesta_por uuid not null references auth.users(id) on delete cascade,
+  situacion     text not null default 'pendiente'
+                check (situacion in ('pendiente', 'aplicada', 'rechazada')),
+  -- Por qué no se pudo aplicar, cuando chocó contra una regla de la tabla.
+  nota_sistema  text,
+  creado_en     timestamptz not null default now(),
+  resuelto_en   timestamptz,
+
+  constraint correccion_no_vacia
+    check (jsonb_typeof(campos) = 'object' and campos <> '{}'::jsonb),
+  -- Sin esta lista blanca una corrección podría pisar `situacion` y
+  -- aprobarse sola.
+  constraint correccion_campos_permitidos
+    check (correccion_campos_validos(tabla, campos))
+);
+
+create table if not exists correcciones_votos (
+  correccion_id uuid not null references correcciones(id) on delete cascade,
+  usuario_id    uuid not null references auth.users(id) on delete cascade,
+  creado_en     timestamptz not null default now(),
+  primary key (correccion_id, usuario_id)
+);
+
 -- ════════════════════════════ Triggers ══════════════════════════════
 
 create or replace function tocar_actualizado_en()
@@ -186,11 +271,18 @@ drop trigger if exists trg_perfil_actualizado on perfiles;
 create trigger trg_perfil_actualizado before update on perfiles
   for each row execute function tocar_actualizado_en();
 
--- El calendario muestra "información actualizada hace X": ese texto sólo
--- vale si la fecha se toca sola cuando se corrige un torneo.
 drop trigger if exists trg_torneo_actualizado on torneos;
 create trigger trg_torneo_actualizado before update on torneos
   for each row execute function tocar_actualizado_en();
+
+drop trigger if exists trg_sala_actualizada on salas;
+create trigger trg_sala_actualizada before update on salas
+  for each row execute function tocar_actualizado_en();
+
+-- Aplica la corrección apenas junta los avales necesarios.
+drop trigger if exists trg_correccion_votada on correcciones_votos;
+create trigger trg_correccion_votada after insert on correcciones_votos
+  for each row execute function evaluar_correccion();
 
 -- Crea el perfil apenas se registra el usuario, así nunca hay una sesión
 -- activa sin fila en perfiles.

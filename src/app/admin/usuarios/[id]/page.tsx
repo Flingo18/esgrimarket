@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { paisDeE164 } from "@/lib/whatsapp";
 import { ROLES } from "@/lib/roles";
 import { urlFoto } from "@/lib/publicaciones";
 import { etiquetaZonas } from "@/lib/geo";
@@ -40,7 +41,7 @@ export default async function PaginaCuentaAdmin({
     await Promise.all([
       admin
         .from("perfiles")
-        .select("id, nombre, telefono_visible, rol, suspendido, motivo_suspension, zonas_entrega, barrio, creado_en")
+        .select("id, nombre, telefono_visible, telefono_e164, rol, suspendido, motivo_suspension, zonas_entrega, barrio, creado_en")
         .eq("id", id)
         .single(),
       admin.auth.admin.getUserById(id),
@@ -112,6 +113,7 @@ export default async function PaginaCuentaAdmin({
         usuario={perfil.id}
         nombre={perfil.nombre}
         telefono={perfil.telefono_visible ?? ""}
+        pais={paisDeE164(perfil.telefono_e164)}
         suspendido={perfil.suspendido}
         esUnoMismo={perfil.id === user.id}
       />

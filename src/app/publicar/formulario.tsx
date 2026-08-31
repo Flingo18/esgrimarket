@@ -5,6 +5,7 @@ import { useActionState, useMemo, useState } from "react";
 
 import { actualizarPublicacion, crearPublicacion } from "@/acciones/publicar";
 import { RADIO_DISPLAY_M, ZONAS, difuminarUbicacion } from "@/lib/geo";
+import { CampoTelefono } from "@/components/campo-telefono";
 import { SelectorZonas } from "@/components/selector-zonas";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import {
@@ -643,15 +644,9 @@ export function FormularioPublicar({
       ) : (
         <Campo
           etiqueta="Tu WhatsApp"
-          ayuda="Se guarda en tu perfil y se usa en todas tus publicaciones. No se muestra en la página: aparece detrás de un botón. Escribilo sin el 0 y sin el 15."
+          ayuda="Se guarda en tu perfil y se usa en todas tus publicaciones. No se muestra en la página: aparece detrás de un botón."
         >
-          <input
-            name="telefono"
-            type="tel"
-            required
-            placeholder="11 1234-5678"
-            className={CAMPO}
-          />
+          <CampoTelefono requerido className={CAMPO} />
         </Campo>
       )}
 

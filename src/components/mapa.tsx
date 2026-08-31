@@ -83,6 +83,8 @@ export default function Mapa({
                 <a href={`tel:${s.telefono.replace(/\D/g, "")}`}>{s.telefono}</a>
               </>
             )}
+            <br />
+            <a href={`/salas/${s.id}/corregir`}>¿Está mal algo? Corregilo</a>
           </Popup>
         </Marker>
       ))}

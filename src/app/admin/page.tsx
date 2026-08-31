@@ -37,6 +37,11 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
       admin.from("publicaciones").select("id", { count: "exact", head: true }),
     ]);
 
+  const { count: correccionesPendientes } = await admin
+    .from("correcciones")
+    .select("id", { count: "exact", head: true })
+    .eq("situacion", "pendiente");
+
   const { data: todosLosTorneos } = await admin
     .from("torneos")
     .select("id, nombre, fecha_inicio, fecha_fin, federacion, salas(nombre)")
@@ -130,6 +135,20 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
                 : "Sala rechazada. No se publica."}
         </p>
       )}
+
+      {correccionesPendientes ? (
+        <p className="mt-4 rounded-lg border border-acento/40 bg-acento-suave px-3 py-2 text-sm">
+          Hay{" "}
+          {correccionesPendientes === 1
+            ? "una corrección propuesta"
+            : `${correccionesPendientes} correcciones propuestas`}{" "}
+          por la comunidad.{" "}
+          <Link href="/correcciones" className="text-acento underline">
+            Verlas
+          </Link>
+          {" — "}no hace falta que las mires: con tres avales se aplican solas.
+        </p>
+      ) : null}
 
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[

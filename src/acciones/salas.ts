@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ZONAS } from "@/lib/geo";
+import { diferencias } from "@/lib/correcciones";
 
 export type EstadoSala = { error?: string; ok?: string };
 
@@ -68,19 +69,23 @@ export async function proponerSala(
 }
 
 /**
- * Edita una sala existente. Sólo admins.
+ * Guarda cambios en una sala.
  *
- * Sirve tanto para corregir lo que carga la comunidad como para completar lo
- * que falta: una sala sin coordenada existe en la lista pero no se dibuja en
- * el mapa hasta que alguien la ubica.
+ * Igual que en torneos: el admin y quien la propuso escriben directo; el
+ * resto deja una corrección que se aplica cuando tres personas la avalan.
+ *
+ * `activa` no entra por acá para nadie que no sea admin — esconder una sala
+ * del mapa no es corregir un dato, es moderar.
  */
 export async function actualizarSala(
   _previo: EstadoSala,
   datos: FormData,
 ): Promise<EstadoSala> {
   const supabase = await crearClienteServidor();
-  const { data: esAdmin } = await supabase.rpc("es_admin");
-  if (!esAdmin) return { error: "No tenés permiso." };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Tenés que ingresar para corregir una sala." };
 
   const id = String(datos.get("id") ?? "");
   if (!id) return { error: "Falta la sala." };
@@ -99,31 +104,70 @@ export async function actualizarSala(
   const lat = texto("lat");
   const lng = texto("lng");
 
-  const admin = crearClienteAdmin();
-  const { error } = await admin
-    .from("salas")
-    .update({
-      nombre,
-      direccion: texto("direccion"),
-      barrio: texto("barrio"),
-      zona,
-      telefono: texto("telefono"),
-      instagram: texto("instagram"),
-      nota: texto("nota"),
-      lat: lat ? Number(lat) : null,
-      lng: lng ? Number(lng) : null,
-      activa: datos.get("activa") === "si",
-    })
-    .eq("id", id);
+  const propuesto = {
+    nombre,
+    direccion: texto("direccion"),
+    barrio: texto("barrio"),
+    zona,
+    telefono: texto("telefono"),
+    instagram: texto("instagram"),
+    nota: texto("nota"),
+    lat: lat ? Number(lat) : null,
+    lng: lng ? Number(lng) : null,
+  };
 
-  if (error) {
-    console.error("Error actualizando sala:", error.message);
-    return { error: "No pudimos guardar los cambios." };
+  const admin = crearClienteAdmin();
+  const { data: actual } = await admin
+    .from("salas")
+    .select("nombre, direccion, barrio, zona, telefono, instagram, nota, lat, lng, propuesta_por")
+    .eq("id", id)
+    .single();
+
+  if (!actual) return { error: "Esa sala ya no existe." };
+
+  const { data: esAdmin } = await supabase.rpc("es_admin");
+  const esAutor = actual.propuesta_por === user.id;
+
+  if (esAdmin || esAutor) {
+    const { error } = await admin
+      .from("salas")
+      .update(
+        esAdmin
+          ? { ...propuesto, activa: datos.get("activa") === "si" }
+          : propuesto,
+      )
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error actualizando sala:", error.message);
+      return { error: "No pudimos guardar los cambios." };
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/mapa");
+    redirect(esAdmin ? "/admin?sala=guardada" : "/mapa?sala=guardada");
   }
 
-  revalidatePath("/admin");
-  revalidatePath("/mapa");
-  redirect("/admin?sala=guardada");
+  const campos = diferencias(actual, propuesto);
+  if (Object.keys(campos).length === 0) {
+    return { error: "No cambiaste nada todavía." };
+  }
+
+  const { error } = await supabase.from("correcciones").insert({
+    tabla: "salas",
+    fila_id: id,
+    campos,
+    motivo: texto("motivo"),
+    propuesta_por: user.id,
+  });
+
+  if (error) {
+    console.error("Error proponiendo corrección:", error.message);
+    return { error: "No pudimos guardar la corrección. Probá de nuevo." };
+  }
+
+  revalidatePath("/correcciones");
+  redirect("/correcciones?propuesta=1");
 }
 
 /** Borra una sala. Las publicaciones que la usaban quedan sin punto de entrega. */

@@ -8,6 +8,8 @@ import {
   cambiarSuspension,
   editarPerfilAjeno,
 } from "@/acciones/admin";
+import { CampoTelefono } from "@/components/campo-telefono";
+import type { PaisId } from "@/lib/whatsapp";
 
 const CAMPO =
   "w-full rounded-lg border border-borde bg-fondo-elevado px-3 py-2 text-sm " +
@@ -31,12 +33,14 @@ export function AccionesCuenta({
   usuario,
   nombre,
   telefono,
+  pais,
   suspendido,
   esUnoMismo,
 }: {
   usuario: string;
   nombre: string;
   telefono: string;
+  pais: PaisId;
   suspendido: boolean;
   esUnoMismo: boolean;
 }) {
@@ -67,10 +71,9 @@ export function AccionesCuenta({
             placeholder="Nombre"
             className={CAMPO}
           />
-          <input
-            name="telefono"
-            defaultValue={telefono}
-            placeholder="Teléfono"
+          <CampoTelefono
+            valorInicial={telefono}
+            paisInicial={pais}
             className={CAMPO}
           />
         </div>

@@ -51,8 +51,22 @@ export type SalaEditable = {
   activa: boolean;
 };
 
-export function FormularioSala({ inicial }: { inicial?: SalaEditable }) {
+/**
+ * Sirve para proponer una sala, para editarla y para corregir la de otro.
+ * `puedeEditar` cambia el botón y muestra el motivo; `esAdmin` es lo único
+ * que habilita esconderla del mapa, que es moderar y no corregir.
+ */
+export function FormularioSala({
+  inicial,
+  puedeEditar = true,
+  esAdmin = false,
+}: {
+  inicial?: SalaEditable;
+  puedeEditar?: boolean;
+  esAdmin?: boolean;
+}) {
   const editando = Boolean(inicial);
+  const sugiriendo = editando && !puedeEditar;
   const [estado, accion, enviando] = useActionState(
     editando ? actualizarSala : proponerSala,
     {},
@@ -160,7 +174,7 @@ export function FormularioSala({ inicial }: { inicial?: SalaEditable }) {
         )}
       </Campo>
 
-      {editando && (
+      {editando && esAdmin && (
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -188,6 +202,20 @@ export function FormularioSala({ inicial }: { inicial?: SalaEditable }) {
         />
       </Campo>
 
+      {sugiriendo && (
+        <Campo
+          etiqueta="¿De dónde sacaste el dato?"
+          ayuda="Opcional, pero es lo que mira el que va a avalar la corrección."
+        >
+          <input
+            name="motivo"
+            maxLength={200}
+            placeholder="Me lo dijeron en la sala"
+            className={CAMPO}
+          />
+        </Campo>
+      )}
+
       {estado.error && (
         <p className="rounded-lg border border-alerta/40 bg-alerta/10 px-3 py-2 text-sm text-alerta">
           {estado.error}
@@ -201,9 +229,11 @@ export function FormularioSala({ inicial }: { inicial?: SalaEditable }) {
       >
         {enviando
           ? "Guardando…"
-          : editando
-            ? "Guardar cambios"
-            : "Proponer la sala"}
+          : sugiriendo
+            ? "Proponer la corrección"
+            : editando
+              ? "Guardar cambios"
+              : "Proponer la sala"}
       </button>
     </form>
   );

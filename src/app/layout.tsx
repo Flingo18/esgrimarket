@@ -55,6 +55,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               Los precios en pesos son de referencia, calculados al dólar blue.
             </p>
             <p>
+              No tenemos relación con las federaciones ni con los clubes. El
+              calendario y el mapa los carga y los corrige la comunidad: son
+              una guía, y lo oficial siempre es lo que dice la federación que
+              organiza.
+            </p>
+            <p>
               <Link href="/privacidad" className="underline hover:text-texto">
                 Privacidad
               </Link>

@@ -8,6 +8,7 @@ import {
 import { ListaTorneos } from "@/components/lista-torneos";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { FEDERACIONES, claveMes, mesDe } from "@/lib/torneos";
+import { AvisoTorneos } from "@/components/aviso-torneos";
 
 export const metadata: Metadata = {
   title: "Calendario de torneos",
@@ -63,14 +64,21 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">Calendario de torneos</h1>
-        <Link href="/torneos/proponer" className="text-sm text-acento underline">
-          Agregar un torneo
-        </Link>
+        <div className="flex gap-4">
+          <Link href="/correcciones" className="text-sm text-acento underline">
+            Correcciones
+          </Link>
+          <Link href="/torneos/proponer" className="text-sm text-acento underline">
+            Agregar un torneo
+          </Link>
+        </div>
       </div>
       <p className="mt-1 text-texto-suave">
         Fechas de todas las federaciones, con el cierre de inscripción y dónde
         anotarse.
       </p>
+
+      <AvisoTorneos />
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <div className="inline-flex rounded-lg border border-borde overflow-hidden">
