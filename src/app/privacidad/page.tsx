@@ -29,7 +29,7 @@ export default function PaginaPrivacidad() {
 
       <p className="mt-6 text-texto-suave">
         Esgrimarket es un proyecto gratuito para la comunidad de esgrima de
-        Buenos Aires. No vendemos datos, no hacemos publicidad dirigida y no
+        Argentina. No vendemos datos, no hacemos publicidad dirigida y no
         usamos cookies de seguimiento.
       </p>
 

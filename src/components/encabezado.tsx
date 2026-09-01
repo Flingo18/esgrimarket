@@ -53,6 +53,11 @@ export async function Encabezado() {
           Esgrimarket
         </Link>
 
+        {/* El logo ya lleva al inicio, pero eso hay que saberlo. Un enlace
+            que dice a dónde va no obliga a adivinar. */}
+        <Link href="/" className="text-sm text-texto-suave hover:text-texto">
+          Comprar
+        </Link>
         <Link href="/torneos" className="text-sm text-texto-suave hover:text-texto">
           Torneos
         </Link>

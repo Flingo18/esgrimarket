@@ -8,7 +8,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "Mapa de salas",
   description:
-    "Dónde se practica esgrima en Buenos Aires, y dónde se puede retirar lo que está publicado.",
+    "Dónde se practica esgrima en Argentina, y dónde se puede retirar lo que está publicado.",
 };
 
 export default async function PaginaMapa() {
@@ -46,7 +46,7 @@ export default async function PaginaMapa() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold tracking-tight">Mapa</h1>
       <p className="mt-1 text-texto-suave">
-        Las salas de esgrima de Buenos Aires
+        Las salas de esgrima del país
         {zonas.length > 0 && ", y las zonas donde se puede retirar lo publicado"}.
       </p>
 

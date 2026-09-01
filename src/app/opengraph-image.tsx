@@ -37,7 +37,7 @@ export default function Imagen() {
           Esgrimarket
         </div>
         <div style={{ fontSize: 32, color: "#98a3ae", marginTop: 12 }}>
-          Equipamiento de esgrima · Buenos Aires
+          Equipamiento de esgrima · Argentina
         </div>
       </div>
     ),
