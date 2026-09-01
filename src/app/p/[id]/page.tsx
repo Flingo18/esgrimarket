@@ -135,13 +135,7 @@ export default async function PaginaPublicacion({ params }: PageProps<"/p/[id]">
         </div>
 
         <div>
-          {p.es_oficial as boolean && (
-            <span className="text-xs font-medium rounded-md bg-acento text-acento-texto px-2 py-1">
-              Tienda Esgrimarket
-            </span>
-          )}
-
-          <h1 className="text-2xl font-semibold tracking-tight mt-2">
+          <h1 className="text-2xl font-semibold tracking-tight">
             {p.titulo as string}
           </h1>
 

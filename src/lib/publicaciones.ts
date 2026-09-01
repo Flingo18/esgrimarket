@@ -70,10 +70,6 @@ export async function listarPublicaciones(
     if (consulta) q = q.textSearch("busqueda", consulta, { config: "spanish" });
   }
 
-  // Las de la tienda propia primero: es el único lugar donde el orden se
-  // inclina a propósito.
-  q = q.order("es_oficial", { ascending: false });
-
   if (filtros.orden === "barato") q = q.order("monto", { ascending: true });
   else if (filtros.orden === "caro") q = q.order("monto", { ascending: false });
   else q = q.order("creado_en", { ascending: false });
@@ -85,7 +81,43 @@ export async function listarPublicaciones(
     return [];
   }
 
-  return (data ?? []) as unknown as PublicacionListada[];
+  const lista = (data ?? []) as unknown as PublicacionListada[];
+
+  // Si la persona eligió un orden, es porque quiere ese orden: meterle algo
+  // arriba a la fuerza sería contestarle otra cosa de la que preguntó.
+  if (filtros.orden === "barato" || filtros.orden === "caro") return lista;
+
+  return conDestacadas(lista);
+}
+
+/** Cuántas publicaciones propias van arriba de todo. */
+const DESTACADAS = 3;
+
+/**
+ * Sube unas pocas publicaciones propias al principio.
+ *
+ * Antes subían todas, y con 37 de 41 marcadas eso dejaba lo de la comunidad
+ * siempre al final — que es lo contrario de lo que tiene que hacer un lugar
+ * hecho para la comunidad.
+ *
+ * Las tres cambian cada día: si fueran siempre las mismas, esas tres se
+ * llevarían todas las visitas y el resto del catálogo no lo vería nadie. El
+ * día como semilla mantiene la lista quieta mientras alguien la mira y la
+ * mueve de un día para el otro.
+ */
+function conDestacadas(lista: PublicacionListada[]): PublicacionListada[] {
+  const propias = lista.filter((p) => p.es_oficial);
+  if (propias.length === 0) return lista;
+
+  const dia = Math.floor(Date.now() / 86_400_000);
+  const desde = dia % propias.length;
+  const elegidas = Array.from(
+    { length: Math.min(DESTACADAS, propias.length) },
+    (_, i) => propias[(desde + i) % propias.length],
+  );
+
+  const arriba = new Set(elegidas.map((p) => p.id));
+  return [...elegidas, ...lista.filter((p) => !arriba.has(p.id))];
 }
 
 /** URL pública de una foto del bucket. */

@@ -51,11 +51,6 @@ export function TarjetaPublicacion({
             Sin foto
           </div>
         )}
-        {p.es_oficial && (
-          <span className="absolute top-2 left-2 text-xs font-medium rounded-md bg-acento text-acento-texto px-2 py-1">
-            Tienda
-          </span>
-        )}
       </div>
 
       <div className="p-3 space-y-2">
