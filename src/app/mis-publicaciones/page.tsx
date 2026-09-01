@@ -51,6 +51,9 @@ export default async function MisPublicaciones({
 
   const lista = publicaciones ?? [];
   const activas = lista.filter((p) => p.situacion === "activa").length;
+  const sinFoto = lista.filter(
+    (p) => p.situacion === "activa" && p.fotos.length === 0,
+  ).length;
   const limite = limiteCupo ?? 5;
 
   return (
@@ -69,6 +72,15 @@ export default async function MisPublicaciones({
         {activas} de {limite} activas.
         {activas >= limite && " Marcá alguna como vendida para liberar lugar."}
       </p>
+
+      {sinFoto > 0 && (
+        <p className="mt-4 rounded-lg border border-alerta/40 bg-alerta/10 px-3 py-2 text-sm text-alerta">
+          {sinFoto === 1
+            ? "Tenés una publicación sin foto y no se está mostrando."
+            : `Tenés ${sinFoto} publicaciones sin foto y no se están mostrando.`}{" "}
+          Subiles una y vuelven al listado.
+        </p>
+      )}
 
       {typeof error === "string" && (
         <p className="mt-4 rounded-lg border border-alerta/40 bg-alerta/10 px-3 py-2 text-sm text-alerta">
@@ -124,6 +136,13 @@ export default async function MisPublicaciones({
                     >
                       {situacion.label}
                     </span>
+                    {/* Sin esto la publicación desaparece del sitio y quien
+                        la cargó no tiene forma de enterarse de por qué. */}
+                    {!foto && p.situacion === "activa" && (
+                      <span className="shrink-0 text-xs rounded-md px-1.5 py-0.5 border border-alerta text-alerta">
+                        No se muestra
+                      </span>
+                    )}
                   </div>
 
                   <div className="mt-1">
@@ -133,6 +152,13 @@ export default async function MisPublicaciones({
                       cotizacion={cotizacion}
                     />
                   </div>
+
+                  {!foto && p.situacion === "activa" && (
+                    <p className="mt-1 text-xs text-alerta">
+                      Le falta la foto. Nadie la ve hasta que subas una:
+                      las publicaciones sin foto no se muestran.
+                    </p>
+                  )}
 
                   <p className="mt-1 text-xs text-texto-suave">
                     {p.contactos === 0

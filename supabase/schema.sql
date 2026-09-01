@@ -141,6 +141,7 @@ create index if not exists idx_pub_armas     on publicaciones using gin (armas_c
 create index if not exists idx_pub_mano      on publicaciones (mano);
 create index if not exists idx_pub_zona      on publicaciones (zona);
 create index if not exists idx_pub_autor     on publicaciones (autor_id);
+create index if not exists idx_fotos_publicacion on fotos (publicacion_id);
 create index if not exists idx_pub_oficial   on publicaciones (es_oficial) where es_oficial;
 create index if not exists idx_pub_busqueda  on publicaciones using gin (busqueda);
 
@@ -411,9 +412,32 @@ create policy salas_lectura_publica on salas
 -- Publicaciones: las activas y no vencidas las ve cualquiera; las propias
 -- las ve siempre su autor, en cualquier situación.
 drop policy if exists pub_lectura_publica on publicaciones;
+-- SECURITY DEFINER a propósito: `fotos_lectura` mira `publicaciones`, y si la
+-- política de `publicaciones` mirara `fotos` con los permisos de quien
+-- consulta, las dos se llamarían entre sí. La función corta ese círculo.
+--
+-- No puede ser un CHECK de tabla: la fila de la publicación se crea antes que
+-- las de fotos, así que en ese instante siempre hay cero.
+create or replace function tiene_foto(pub uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$ select exists (select 1 from fotos where publicacion_id = pub) $$;
+
 create policy pub_lectura_publica on publicaciones
-  for select using (
-    (situacion = 'activa' and vence_en > now()) or auth.uid() = autor_id
+  for select to public
+  using (
+    (situacion = 'activa'
+      and vence_en > now()
+      and autor_activo(autor_id)
+      -- Sin foto no se publica. La regla vive acá y no en el código para que
+      -- no dependa de que cada consulta se acuerde de filtrar.
+      and tiene_foto(id))
+    -- El autor sigue viendo las suyas: si no, no tendría cómo darse cuenta
+    -- de que le falta la foto ni cómo agregarla.
+    or auth.uid() = autor_id
   );
 
 -- El `es_oficial` reservado para admins es lo que impide que cualquiera
