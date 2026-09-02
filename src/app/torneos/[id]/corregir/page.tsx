@@ -33,7 +33,7 @@ export default async function PaginaCorregirTorneo({
   ] = await Promise.all([
     admin
       .from("torneos")
-      .select("id, nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, propuesto_por, situacion")
+      .select("id, nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, armas, propuesto_por, situacion")
       .eq("id", id)
       .single(),
     admin.from("salas").select("id, nombre").eq("situacion", "aprobada").order("nombre"),

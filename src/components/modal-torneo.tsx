@@ -6,6 +6,7 @@ import { avalarCorreccion } from "@/acciones/correcciones";
 import type { CorreccionConCambios } from "@/lib/correcciones";
 import { AvisoTorneos } from "./aviso-torneos";
 import { SITIO_FEDERACION } from "@/lib/torneos";
+import { ARMAS } from "@/lib/taxonomy";
 import {
   colorFederacion,
   nombreOrganizador,
@@ -27,6 +28,7 @@ export type TorneoDetalle = {
   contacto_inscripcion: string | null;
   notas: string | null;
   actualizado_en: string;
+  armas?: string[];
   categorias?: { nombre: string }[];
 };
 
@@ -116,6 +118,12 @@ export function ModalTorneo({
               : dias === 0
                 ? "La inscripción cierra hoy"
                 : `Cierra la inscripción en ${dias} ${dias === 1 ? "día" : "días"}`}
+          </p>
+        )}
+
+        {torneo.armas && torneo.armas.length > 0 && (
+          <p className="mt-2 text-sm font-medium">
+            {torneo.armas.map((a) => ARMAS[a as keyof typeof ARMAS] ?? a).join(" · ")}
           </p>
         )}
 

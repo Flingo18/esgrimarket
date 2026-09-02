@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { ModalTorneo, type TorneoDetalle } from "./modal-torneo";
 import type { CorreccionConCambios } from "@/lib/correcciones";
+import { ARMAS } from "@/lib/taxonomy";
 import {
   colorFederacion,
   diasHasta,
@@ -66,6 +67,12 @@ export function ListaTorneos({
 
                 <p className="mt-1.5 font-medium leading-snug">{t.nombre}</p>
                 {t.lugar && <p className="text-sm text-texto-suave">{t.lugar}</p>}
+
+                {t.armas && t.armas.length > 0 && (
+                  <p className="mt-1 text-sm">
+                    {t.armas.map((a) => ARMAS[a as keyof typeof ARMAS] ?? a).join(" · ")}
+                  </p>
+                )}
 
                 {t.categorias && t.categorias.length > 0 && (
                   <p className="mt-1 text-xs text-texto-suave">

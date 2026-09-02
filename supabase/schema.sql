@@ -202,6 +202,13 @@ create table if not exists torneos (
   contacto_inscripcion text,
   notas                text,
 
+  -- Arreglo porque casi todas las fechas corren varias armas el mismo fin de
+  -- semana. Vacío es "no está cargado", no "ninguna": filtrar por arma no
+  -- tiene que esconder los que todavía nadie completó como si no aplicaran.
+  armas                text[] not null default '{}'
+                       constraint torneos_armas_validas
+                       check (armas <@ array['florete', 'espada', 'sable']),
+
   situacion            text not null default 'pendiente'
                        check (situacion in ('pendiente', 'aprobado', 'rechazado')),
   propuesto_por        uuid references auth.users(id) on delete set null,
@@ -213,6 +220,28 @@ create table if not exists torneos (
   constraint torneos_organizador_coherente
     check ((organizador_tipo = 'federacion' and sala_id is null)
         or (organizador_tipo = 'club' and federacion is null))
+);
+
+-- ────────────────────── Avisos de torneos ───────────────────────────
+--
+-- "Avisame cuando haya un torneo de espada". Mismo mecanismo que las
+-- búsquedas guardadas de productos.
+--
+-- Un arreglo vacío significa "cualquiera": quien quiere enterarse de todo no
+-- tiene que tildar las tres armas. Y es una fila por persona — dos le
+-- mandarían dos mails por el mismo torneo.
+create table if not exists avisos_torneos (
+  id          uuid primary key default gen_random_uuid(),
+  usuario_id  uuid not null references auth.users(id) on delete cascade,
+  armas       text[] not null default '{}'
+              constraint avisos_armas_validas
+              check (armas <@ array['florete', 'espada', 'sable']),
+  categorias  uuid[] not null default '{}',
+  activo      boolean not null default true,
+  avisos      integer not null default 0,
+  creado_en   timestamptz not null default now(),
+
+  unique (usuario_id)
 );
 
 -- ─────────────────────────── Categorías ─────────────────────────────

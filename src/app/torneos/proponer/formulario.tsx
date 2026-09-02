@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 
 import { actualizarTorneo, proponerTorneo } from "@/acciones/torneos";
+import { ARMAS, TODAS_LAS_ARMAS } from "@/lib/taxonomy";
 import {
   FEDERACIONES,
   categoriasPorFederacion,
@@ -46,6 +47,7 @@ export type TorneoEditable = {
   lugar: string | null;
   contacto_inscripcion: string | null;
   notas: string | null;
+  armas?: string[];
   categorias?: string[];
 };
 
@@ -153,6 +155,26 @@ export function FormularioTorneo({
           </select>
         </Campo>
       )}
+
+      <Campo
+        etiqueta="Armas"
+        ayuda="Las que se tiran en este torneo. Es lo que permite seguir sólo lo de tu arma."
+      >
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          {TODAS_LAS_ARMAS.map((a) => (
+            <label key={a} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="armas"
+                value={a}
+                defaultChecked={inicial?.armas?.includes(a)}
+                className="size-4 accent-[var(--acento)]"
+              />
+              <span>{ARMAS[a]}</span>
+            </label>
+          ))}
+        </div>
+      </Campo>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <Campo etiqueta="Fecha de inicio" ayuda="Dejala vacía si todavía no se confirmó.">

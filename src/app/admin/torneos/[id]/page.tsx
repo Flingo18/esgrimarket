@@ -32,7 +32,7 @@ export default async function PaginaEditarTorneo({
     await Promise.all([
     admin
       .from("torneos")
-      .select("id, nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, situacion, actualizado_en")
+      .select("id, nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, armas, situacion, actualizado_en")
       .eq("id", id)
       .single(),
     admin

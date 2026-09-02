@@ -233,6 +233,7 @@ export type Database = {
           federacion: string | null;
           organizador_tipo: string;
           sala_id: string | null;
+          armas: string[];
           contacto_inscripcion: string | null;
           fecha_inicio: string | null;
           fecha_fin: string | null;
@@ -251,6 +252,7 @@ export type Database = {
           federacion?: string | null;
           organizador_tipo?: string;
           sala_id?: string | null;
+          armas?: string[];
           contacto_inscripcion?: string | null;
           fecha_inicio?: string | null;
           fecha_fin?: string | null;
@@ -401,6 +403,28 @@ export type Database = {
           },
         ];
       };
+      avisos_torneos: {
+        Row: {
+          id: string;
+          usuario_id: string;
+          armas: string[];
+          categorias: string[];
+          activo: boolean;
+          avisos: number;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          usuario_id: string;
+          armas?: string[];
+          categorias?: string[];
+          activo?: boolean;
+          avisos?: number;
+          creado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["avisos_torneos"]["Insert"]>;
+        Relationships: [];
+      };
       cotizacion_cache: {
         Row: { id: boolean; venta: number; fuente: string; actualizado: string };
         Insert: { id?: boolean; venta: number; fuente: string; actualizado?: string };
@@ -428,6 +452,12 @@ export type Database = {
       fotos_huerfanas: { Args: { horas: number }; Returns: { ruta: string }[] };
       /** A quién avisarle por una publicación nueva. Sólo service role. */
       sumar_aviso: { Args: { busqueda: string }; Returns: undefined };
+      /** A quién avisarle de un torneo nuevo. Sólo service role. */
+      destinatarios_de_torneo: {
+        Args: { t_id: string };
+        Returns: { aviso_id: string; email: string; armas: string[] }[];
+      };
+      sumar_aviso_torneo: { Args: { aviso: string }; Returns: undefined };
       destinatarios_de_aviso: {
         Args: { pub_id: string };
         Returns: { busqueda_id: string; email: string; texto: string | null }[];

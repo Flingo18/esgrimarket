@@ -22,7 +22,7 @@ export async function TorneosProximos() {
   const [{ data }, { data: sesion }] = await Promise.all([
     supabase
       .from("torneos")
-      .select("id, nombre, federacion, salas(nombre), fecha_inicio, fecha_fin, lugar, cierre_inscripcion, contacto_inscripcion, notas, actualizado_en, torneos_categorias(categorias(nombre))")
+      .select("id, nombre, federacion, salas(nombre), fecha_inicio, fecha_fin, lugar, cierre_inscripcion, contacto_inscripcion, notas, armas, actualizado_en, torneos_categorias(categorias(nombre))")
       .gte("fecha_inicio", iso(hoy))
       .lte("fecha_inicio", iso(enUnMes))
       .order("fecha_inicio")

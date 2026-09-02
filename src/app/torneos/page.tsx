@@ -8,6 +8,7 @@ import {
 import { ListaTorneos } from "@/components/lista-torneos";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { correccionesPorTorneo } from "@/lib/correcciones-servidor";
+import { ARMAS, TODAS_LAS_ARMAS } from "@/lib/taxonomy";
 import {
   FEDERACIONES,
   FEDERACION_CORTA,
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
 const SIN_RESULTADOS = "00000000-0000-0000-0000-000000000000";
 
 const COLUMNAS =
-  "id, nombre, federacion, organizador_tipo, sala_id, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, actualizado_en, torneos_categorias(categorias(nombre))";
+  "id, nombre, federacion, organizador_tipo, sala_id, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, armas, actualizado_en, torneos_categorias(categorias(nombre))";
 
 const SELECT =
   "rounded-lg border border-borde bg-fondo-elevado px-2.5 py-2 text-sm outline-none focus:border-acento";
@@ -37,6 +38,10 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
   const params = await searchParams;
   const federacion = typeof params.federacion === "string" ? params.federacion : "";
   const categoria = typeof params.categoria === "string" ? params.categoria : "";
+  const armaCruda = typeof params.arma === "string" ? params.arma : "";
+  const arma = (TODAS_LAS_ARMAS as readonly string[]).includes(armaCruda)
+    ? armaCruda
+    : "";
   const verPasados = params.pasados === "1";
   const vista = params.vista === "calendario" ? "calendario" : "lista";
 
@@ -70,6 +75,9 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
     .order("fecha_inicio", { ascending: true, nullsFirst: false });
 
   if (federacion) q = q.eq("federacion", federacion);
+  // `contains` sobre el arreglo: un torneo de florete y espada aparece
+  // filtrando por cualquiera de las dos.
+  if (arma) q = q.contains("armas", [arma]);
   // Sin torneos en esa categoría el `in` vacío no filtra nada, así que se
   // corta con un id imposible.
   if (deLaCategoria) {
@@ -111,7 +119,7 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
   /** El mismo listado con un filtro cambiado, conservando los demás. */
   const conFiltro = (extra: string, cambios?: Record<string, string>) => {
     const url = new URLSearchParams();
-    const puestos = { federacion, categoria, ...cambios };
+    const puestos = { federacion, categoria, arma, ...cambios };
     for (const [k, v] of Object.entries(puestos)) if (v) url.set(k, v);
     for (const par of extra.split("&").filter(Boolean)) {
       const [k, v = ""] = par.split("=");
@@ -168,6 +176,13 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
             ))}
           </select>
 
+          <select name="arma" defaultValue={arma} className={SELECT}>
+            <option value="">Todas las armas</option>
+            {TODAS_LAS_ARMAS.map((a) => (
+              <option key={a} value={a}>{ARMAS[a]}</option>
+            ))}
+          </select>
+
           <select name="categoria" defaultValue={categoria} className={SELECT}>
             <option value="">Todas las categorías</option>
             {categoriasPorFederacion((categorias ?? []) as Categoria[]).map(
@@ -215,6 +230,12 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
           {aMostrar.length === 0 && sinFecha.length === 0 && (
             <p className="mt-12 text-center text-texto-suave">
               No hay torneos cargados con esos filtros.
+              {arma && (
+                <>
+                  {" "}Ojo: los torneos que todavía no tienen el arma cargada no
+                  aparecen al filtrar.
+                </>
+              )}
               {categoria && (
                 <>
                   {" "}

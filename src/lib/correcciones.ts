@@ -11,6 +11,7 @@
 
 import { FEDERACIONES } from "./torneos";
 import { ZONAS } from "./geo";
+import { ARMAS } from "./taxonomy";
 
 /**
  * Cuántos avales hacen falta, sin contar a quien la propuso: cuatro personas
@@ -47,6 +48,7 @@ const ETIQUETAS: Record<string, string> = {
   lugar: "Lugar",
   contacto_inscripcion: "Dónde inscribirse",
   notas: "Notas",
+  armas: "Armas",
   direccion: "Dirección",
   barrio: "Barrio",
   zona: "Zona",
@@ -72,7 +74,9 @@ export function mostrarValor(
   valor: unknown,
   nombresDeSala?: Map<string, string>,
 ): string {
-  if (valor === null || valor === undefined || valor === "") return "vacío";
+  if (campo !== "armas" && (valor === null || valor === undefined || valor === "")) {
+    return "vacío";
+  }
 
   if (campo === "federacion") {
     return FEDERACIONES[valor as keyof typeof FEDERACIONES] ?? String(valor);
@@ -85,6 +89,11 @@ export function mostrarValor(
   }
   if (campo === "organizador_tipo") {
     return valor === "club" ? "Un club" : "Una federación";
+  }
+  if (campo === "armas") {
+    const lista = Array.isArray(valor) ? valor : [];
+    if (lista.length === 0) return "sin cargar";
+    return lista.map((a) => ARMAS[a as keyof typeof ARMAS] ?? a).join(", ");
   }
   if (campo === "lat" || campo === "lng") {
     return Number(valor).toFixed(5);

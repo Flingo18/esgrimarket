@@ -5,7 +5,11 @@ import { revalidatePath } from "next/cache";
 
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { FEDERACIONES } from "@/lib/torneos";
+import { after } from "next/server";
+
+import { FEDERACIONES, nombreOrganizador, rangoDeFechas } from "@/lib/torneos";
+import { ARMAS, TODAS_LAS_ARMAS } from "@/lib/taxonomy";
+import { avisarTorneo } from "@/lib/avisos";
 import { diferencias } from "@/lib/correcciones";
 
 export type EstadoTorneo = { error?: string; ok?: string };
@@ -37,6 +41,13 @@ async function guardarCategorias(
     categoria_id: c.id,
   }));
   if (filas.length) await admin.from("torneos_categorias").insert(filas);
+}
+
+
+/** Las armas del formulario, quedándose sólo con las que existen. */
+function armasDe(datos: FormData): string[] {
+  const pedidas = datos.getAll("armas").map(String);
+  return TODAS_LAS_ARMAS.filter((a) => pedidas.includes(a));
 }
 
 /** Propone un torneo. Queda pendiente hasta que un admin lo apruebe. */
@@ -87,6 +98,7 @@ export async function proponerTorneo(
     lugar: texto("lugar"),
     contacto_inscripcion: texto("contacto_inscripcion"),
     notas: texto("notas"),
+    armas: armasDe(datos),
     situacion: "pendiente",
     propuesto_por: user.id,
   }).select("id").single();
@@ -176,12 +188,13 @@ export async function actualizarTorneo(
     lugar: texto("lugar"),
     contacto_inscripcion: texto("contacto_inscripcion"),
     notas: texto("notas"),
+    armas: armasDe(datos),
   };
 
   const admin = crearClienteAdmin();
   const { data: actual } = await admin
     .from("torneos")
-    .select("nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, propuesto_por")
+    .select("nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, armas, propuesto_por")
     .eq("id", id)
     .single();
 
@@ -279,7 +292,67 @@ export async function moderarTorneo(
     return { error: "No pudimos guardar la decisión." };
   }
 
+  // Los avisos salen después de responder: aprobar no puede quedar esperando
+  // a que salgan los mails, ni fallar si el correo no contesta.
+  if (decision === "aprobado") {
+    after(async () => {
+      await avisarDeTorneo(id);
+    });
+  }
+
   revalidatePath("/admin");
   revalidatePath("/torneos");
   redirect(`/admin?torneo=${decision}`);
+}
+
+/**
+ * Avisa a quienes pidieron enterarse de torneos como este.
+ *
+ * Se dispara al aprobar y no al proponer: si saliera al cargarlo, la gente
+ * recibiría mails de fechas que después se rechazan.
+ *
+ * Corre con la clave de servicio porque tiene que leer los avisos y los mails
+ * de otros. Los errores se registran y nada más: un aviso que no sale no
+ * puede desaprobar un torneo que ya está aprobado.
+ */
+async function avisarDeTorneo(id: string) {
+  try {
+    const admin = crearClienteAdmin();
+
+    const [{ data: torneo }, { data: destinatarios, error }] = await Promise.all([
+      admin
+        .from("torneos")
+        .select("nombre, federacion, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, armas")
+        .eq("id", id)
+        .single(),
+      admin.rpc("destinatarios_de_torneo", { t_id: id }),
+    ]);
+
+    if (error || !torneo || !destinatarios?.length) return;
+
+    const cuando = torneo.fecha_inicio
+      ? rangoDeFechas(torneo.fecha_inicio, torneo.fecha_fin)
+      : "Fecha por confirmar";
+
+    const armas = (torneo.armas ?? [])
+      .map((a) => ARMAS[a as keyof typeof ARMAS] ?? a)
+      .join(", ");
+
+    for (const d of destinatarios) {
+      const salio = await avisarTorneo({
+        para: d.email,
+        nombre: torneo.nombre,
+        cuando,
+        organizador: nombreOrganizador(torneo.federacion, torneo.salas?.nombre),
+        armas,
+        cierre: torneo.cierre_inscripcion
+          ? rangoDeFechas(torneo.cierre_inscripcion, null)
+          : null,
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/torneos`,
+      });
+      if (salio) await admin.rpc("sumar_aviso_torneo", { aviso: d.aviso_id });
+    }
+  } catch (e) {
+    console.error("Error avisando de torneo:", e);
+  }
 }
