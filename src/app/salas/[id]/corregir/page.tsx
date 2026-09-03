@@ -8,7 +8,7 @@ import {
 } from "@/app/salas/proponer/formulario";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { VOTOS_PARA_APLICAR } from "@/lib/correcciones";
+import { avalesNecesarios } from "@/lib/correcciones-servidor";
 
 export const metadata: Metadata = { title: "Corregir una sala" };
 
@@ -24,6 +24,7 @@ export default async function PaginaCorregirSala({
   if (!user) redirect(`/ingresar?next=/salas/${id}/corregir`);
 
   const admin = crearClienteAdmin();
+  const necesarios = await avalesNecesarios();
   const [{ data: sala }, { data: esAdmin }] = await Promise.all([
     admin
       .from("salas")
@@ -56,7 +57,7 @@ export default async function PaginaCorregirSala({
         ) : (
           <>
             Cambiá lo que esté mal y mandalo. Se aplica cuando{" "}
-            {VOTOS_PARA_APLICAR} personas más lo avalen.
+            {necesarios} personas más lo avalen.
           </>
         )}
       </p>

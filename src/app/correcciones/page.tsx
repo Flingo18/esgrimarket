@@ -4,12 +4,12 @@ import { redirect } from "next/navigation";
 
 import { avalarCorreccion, retirarAval, rechazarCorreccion, retirarCorreccion } from "@/acciones/correcciones";
 import {
-  VOTOS_PARA_APLICAR,
   etiquetaCampo,
   mostrarValor,
 } from "@/lib/correcciones";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { avalesNecesarios } from "@/lib/correcciones-servidor";
 import { haceCuanto } from "@/lib/torneos";
 
 export const metadata: Metadata = {
@@ -40,6 +40,7 @@ export default async function PaginaCorrecciones({
   if (!user) redirect("/ingresar?next=/correcciones");
 
   const admin = crearClienteAdmin();
+  const necesarios = await avalesNecesarios();
   const { data: esAdmin } = await supabase.rpc("es_admin");
 
   const { data: pendientes } = await admin
@@ -95,14 +96,14 @@ export default async function PaginaCorrecciones({
       <h1 className="text-2xl font-semibold tracking-tight">Correcciones</h1>
       <p className="mt-2 text-texto-suave">
         Las fechas se reprograman y las salas se mudan. Cualquiera puede
-        proponer un arreglo, y con {VOTOS_PARA_APLICAR} avales se aplica solo
+        proponer un arreglo, y con {necesarios} avales se aplica solo
         — sin esperar a nadie.
       </p>
 
       {propuesta && (
         <p className="mt-5 rounded-lg border border-precio/40 bg-precio/10 px-3 py-2 text-sm text-precio">
           Listo, quedó propuesta. Se aplica cuando la avalen{" "}
-          {VOTOS_PARA_APLICAR} personas.
+          {necesarios} personas.
         </p>
       )}
 
@@ -118,7 +119,7 @@ export default async function PaginaCorrecciones({
             const votantes = avales.get(c.id) ?? [];
             const yaAvale = votantes.includes(user.id);
             const esMia = c.propuesta_por === user.id;
-            const faltan = Math.max(0, VOTOS_PARA_APLICAR - votantes.length);
+            const faltan = Math.max(0, necesarios - votantes.length);
             const quien = nombres.get(c.propuesta_por);
             const destino =
               c.tabla === "torneos" ? "/torneos" : "/mapa";
@@ -160,7 +161,7 @@ export default async function PaginaCorrecciones({
 
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <span className="text-sm text-texto-suave">
-                    {votantes.length} de {VOTOS_PARA_APLICAR} avales
+                    {votantes.length} de {necesarios} avales
                     {faltan > 0 && ` · faltan ${faltan}`}
                   </span>
 

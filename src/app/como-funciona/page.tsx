@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { VOTOS_PARA_APLICAR } from "@/lib/correcciones";
+import { avalesNecesarios } from "@/lib/correcciones-servidor";
 
 export const metadata: Metadata = {
   title: "Cómo funciona",
@@ -31,7 +31,9 @@ function Paso({
   );
 }
 
-export default function PaginaComoFunciona() {
+export default async function PaginaComoFunciona() {
+  const necesarios = await avalesNecesarios();
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">Cómo funciona</h1>
@@ -86,7 +88,7 @@ export default function PaginaComoFunciona() {
           <p>
             Si la cargaste vos, el cambio se guarda al instante. Si es de otro,
             queda propuesta y <strong>se aplica sola</strong> cuando{" "}
-            {VOTOS_PARA_APLICAR} personas más digan que está bien. No espera a
+            {necesarios} personas más digan que está bien. No espera a
             ningún administrador: las fechas se reprograman y tienen que poder
             arreglarse rápido.
           </p>

@@ -8,7 +8,7 @@ import {
 } from "@/app/torneos/proponer/formulario";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { VOTOS_PARA_APLICAR } from "@/lib/correcciones";
+import { avalesNecesarios } from "@/lib/correcciones-servidor";
 
 export const metadata: Metadata = { title: "Corregir un torneo" };
 
@@ -24,6 +24,7 @@ export default async function PaginaCorregirTorneo({
   if (!user) redirect(`/ingresar?next=/torneos/${id}/corregir`);
 
   const admin = crearClienteAdmin();
+  const necesarios = await avalesNecesarios();
   const [
     { data: torneo },
     { data: salas },
@@ -73,7 +74,7 @@ export default async function PaginaCorregirTorneo({
         ) : (
           <>
             Cambiá lo que esté mal y mandalo. La corrección se aplica cuando{" "}
-            {VOTOS_PARA_APLICAR} personas más digan que está bien, así nadie
+            {necesarios} personas más digan que está bien, así nadie
             tiene que esperar a que un administrador la mire.
           </>
         )}

@@ -2,10 +2,24 @@ import "server-only";
 
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import {
-  VOTOS_PARA_APLICAR,
+  AVALES_MINIMOS,
   cambiosVisibles,
   type CorreccionConCambios,
 } from "@/lib/correcciones";
+
+/**
+ * Cuántos avales hacen falta hoy.
+ *
+ * Lo decide la base, que es la que después aplica la corrección: si acá
+ * dijéramos un número y allá se usara otro, la pantalla mentiría. Ante un
+ * error se cae al piso, que es lo más conservador que se puede mostrar.
+ */
+export async function avalesNecesarios(): Promise<number> {
+  const admin = crearClienteAdmin();
+  const { data, error } = await admin.rpc("votos_para_aplicar");
+  if (error || typeof data !== "number") return AVALES_MINIMOS;
+  return data;
+}
 
 /**
  * Las correcciones que esperan aval, listas para la ficha de cada torneo.
@@ -21,6 +35,7 @@ export async function correccionesPorTorneo(
   const porTorneo = new Map<string, CorreccionConCambios[]>();
   if (torneos.length === 0) return porTorneo;
 
+  const necesarios = await avalesNecesarios();
   const admin = crearClienteAdmin();
   const { data: pendientes } = await admin
     .from("correcciones")
@@ -61,7 +76,7 @@ export async function correccionesPorTorneo(
         id: c.id,
         motivo: c.motivo,
         avales: votantes.length,
-        faltan: Math.max(0, VOTOS_PARA_APLICAR - votantes.length),
+        faltan: Math.max(0, necesarios - votantes.length),
         esMia,
         yaAvale,
         puedeAvalar: usuario !== null && !esMia && !yaAvale,

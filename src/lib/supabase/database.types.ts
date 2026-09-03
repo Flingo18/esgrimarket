@@ -442,7 +442,7 @@ export type Database = {
       limite_efectivo: { Args: { usuario: string }; Returns: number };
       /** Admins y cuentas pagas: son los únicos que pueden publicar con stock. */
       puede_cargar_stock: { Args: Record<never, never>; Returns: boolean };
-      /** Cuántos avales hacen falta para que una corrección se aplique sola. */
+      /** Cuántos avales hacen falta hoy: 5% de las cuentas activas, entre 3 y 10. */
       votos_para_aplicar: { Args: Record<never, never>; Returns: number };
       /** Escribe una corrección sobre la fila. Sólo service role o el trigger. */
       aplicar_correccion: { Args: { c_id: string }; Returns: boolean };

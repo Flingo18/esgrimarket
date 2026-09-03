@@ -14,14 +14,14 @@ import { ZONAS } from "./geo";
 import { ARMAS } from "./taxonomy";
 
 /**
- * Cuántos avales hacen falta, sin contar a quien la propuso: cuatro personas
- * de acuerdo en total.
+ * Cuántos avales hacen falta cuando no se pudo consultar a la base.
  *
- * El mismo número está en la base, en `votos_para_aplicar()`. Si se cambia
- * uno hay que cambiar el otro: acá sólo se usa para explicar cuánto falta,
- * quien decide es la base.
+ * El número real lo calcula `votos_para_aplicar()` en la base: 5% de las
+ * cuentas activas, con piso 3 y techo 10. Acá vive sólo el piso, para que
+ * una pantalla que no pudo leerlo no muestre "0 avales" ni invente un
+ * número más bajo que el que la base va a exigir.
  */
-export const VOTOS_PARA_APLICAR = 3;
+export const AVALES_MINIMOS = 3;
 
 export type Tabla = "torneos" | "salas";
 
