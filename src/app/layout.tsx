@@ -43,10 +43,54 @@ export const metadata: Metadata = {
   ],
 };
 
+const SITIO = process.env.NEXT_PUBLIC_SITE_URL ?? "https://esgrimarket.com.ar";
+
+/**
+ * Quién es este sitio, para Google.
+ *
+ * Sin esto, "Esgrimarket" es una palabra suelta en un título. Con esto es una
+ * entidad con nombre, alcance y buscador propio — que es lo que hace que
+ * buscar la marca traiga el sitio y no una lista de coincidencias parciales.
+ */
+const DATOS_DEL_SITIO = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITIO}/#organizacion`,
+      name: "Esgrimarket",
+      url: SITIO,
+      description: DESCRIPCION,
+      areaServed: { "@type": "Country", name: "Argentina" },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITIO}/#sitio`,
+      url: SITIO,
+      name: "Esgrimarket",
+      inLanguage: "es-AR",
+      publisher: { "@id": `${SITIO}/#organizacion` },
+      // Habilita el buscador propio dentro del resultado de Google.
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITIO}/?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ],
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es-AR" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(DATOS_DEL_SITIO) }}
+        />
         <Encabezado />
         <main className="flex-1">{children}</main>
         <footer className="border-t border-borde mt-16">
