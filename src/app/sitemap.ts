@@ -14,6 +14,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: SITIO, changeFrequency: "daily", priority: 1 },
     { url: `${SITIO}/torneos`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITIO}/mapa`, changeFrequency: "monthly", priority: 0.8 },
+    {
+      url: `${SITIO}/comprar-equipamiento-esgrima-argentina`,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
     { url: `${SITIO}/como-funciona`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITIO}/privacidad`, changeFrequency: "yearly", priority: 0.2 },
   ];

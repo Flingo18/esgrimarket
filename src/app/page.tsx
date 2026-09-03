@@ -48,6 +48,14 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
           Comprá y vendé entre gente de la comunidad: floretes, espadas, sables,
           caretas, chaquetillas y cables. El contacto es directo por WhatsApp.
         </p>
+        <p className="text-sm mt-2">
+          <Link
+            href="/comprar-equipamiento-esgrima-argentina"
+            className="text-acento underline"
+          >
+            ¿Estás empezando? Qué necesitás y qué conviene comprar usado
+          </Link>
+        </p>
       </div>
 
       {/* Antes del listado: quien entra a mirar equipamiento se cruza con las
