@@ -44,25 +44,25 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
 
   const { data: todosLosTorneos } = await admin
     .from("torneos")
-    .select("id, nombre, fecha_inicio, fecha_fin, federacion, salas(nombre)")
+    .select("id, nombre, fecha_inicio, fecha_fin, federacion, salas(nombre), propuesto_por")
     .eq("situacion", "aprobado")
     .order("fecha_inicio", { ascending: true, nullsFirst: false });
 
   const { data: todasLasSalas } = await admin
     .from("salas")
-    .select("id, nombre, barrio, zona, lat, activa, situacion")
+    .select("id, nombre, barrio, zona, lat, activa, situacion, propuesta_por")
     .eq("situacion", "aprobada")
     .order("nombre");
 
   const { data: torneosPendientes } = await admin
     .from("torneos")
-    .select("id, nombre, federacion, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas")
+    .select("id, nombre, federacion, salas(nombre), fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, propuesto_por")
     .eq("situacion", "pendiente")
     .order("creado_en", { ascending: true });
 
   const { data: salasPendientes } = await admin
     .from("salas")
-    .select("id, nombre, direccion, barrio, zona, telefono, instagram, nota, lat, lng")
+    .select("id, nombre, direccion, barrio, zona, telefono, instagram, nota, lat, lng, propuesta_por")
     .eq("situacion", "pendiente")
     .order("creado_en", { ascending: true });
 
@@ -89,6 +89,24 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
   const torneosPasados = (todosLosTorneos ?? []).filter(terminado).reverse();
 
   const porId = new Map((perfiles ?? []).map((p) => [p.id, p]));
+  const mailPorId = new Map(
+    (usuarios?.users ?? []).map((u) => [u.id, u.email ?? "(sin mail)"]),
+  );
+
+  /**
+   * Quién propuso algo, con enlace a su cuenta.
+   *
+   * El nombre suele estar vacío, así que cae al mail: lo que hace falta es
+   * poder identificar a la persona y ver qué más cargó.
+   */
+  const quien = (id: string | null) => {
+    if (!id) return null;
+    const perfil = porId.get(id);
+    return {
+      id,
+      etiqueta: perfil?.nombre?.trim() || mailPorId.get(id) || "cuenta borrada",
+    };
+  };
 
   const filas = (usuarios?.users ?? [])
     .map((u) => {
@@ -174,7 +192,11 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
           </h2>
           <ul className="mt-4 space-y-2">
             {(torneosPendientes as TorneoPendiente[]).map((t) => (
-              <FilaTorneoPendiente key={t.id} torneo={t} />
+              <FilaTorneoPendiente
+                key={t.id}
+                torneo={t}
+                quien={quien(t.propuesto_por)}
+              />
             ))}
           </ul>
         </>
@@ -191,7 +213,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
           </p>
           <ul className="mt-4 space-y-2">
             {(salasPendientes as SalaPendiente[]).map((s) => (
-              <FilaSalaPendiente key={s.id} sala={s} />
+              <FilaSalaPendiente key={s.id} sala={s} quien={quien(s.propuesta_por)} />
             ))}
           </ul>
         </>
@@ -213,7 +235,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
 
       <ul className="mt-3 space-y-2">
         {torneosProximos.map((t) => (
-          <FilaTorneo key={t.id} torneo={t} />
+          <FilaTorneo key={t.id} torneo={{ ...t, quien: quien(t.propuesto_por) }} />
         ))}
       </ul>
 
@@ -224,7 +246,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
           </summary>
           <ul className="mt-3 space-y-2">
             {torneosPasados.map((t) => (
-              <FilaTorneo key={t.id} torneo={t} />
+              <FilaTorneo key={t.id} torneo={{ ...t, quien: quien(t.propuesto_por) }} />
             ))}
           </ul>
         </details>
@@ -251,6 +273,17 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
                 {s.barrio ?? "Sin barrio"}
                 {!s.lat && " · sin punto en el mapa"}
                 {!s.activa && " · oculta"}
+                {" · "}
+                {quien(s.propuesta_por) ? (
+                  <Link
+                    href={`/admin/usuarios/${s.propuesta_por}`}
+                    className="text-acento underline"
+                  >
+                    {quien(s.propuesta_por)!.etiqueta}
+                  </Link>
+                ) : (
+                  "cargada en la importación"
+                )}
               </p>
             </div>
             <Link
@@ -288,6 +321,7 @@ function FilaTorneo({
     fecha_inicio: string | null;
     federacion: string | null;
     salas: { nombre: string } | null;
+    quien: { id: string; etiqueta: string } | null;
   };
 }) {
   return (

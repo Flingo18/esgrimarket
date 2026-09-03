@@ -37,8 +37,13 @@ export default async function PaginaCuentaAdmin({
 
   const admin = crearClienteAdmin();
 
-  const [{ data: perfil }, { data: cuenta }, { data: publicaciones }] =
-    await Promise.all([
+  const [
+    { data: perfil },
+    { data: cuenta },
+    { data: publicaciones },
+    { data: salasPropias },
+    { data: torneosPropios },
+  ] = await Promise.all([
       admin
         .from("perfiles")
         .select("id, nombre, telefono_visible, telefono_e164, rol, suspendido, motivo_suspension, zonas_entrega, barrio, creado_en")
@@ -49,6 +54,16 @@ export default async function PaginaCuentaAdmin({
         .from("publicaciones")
         .select("id, titulo, situacion, monto, moneda_base, contactos, unidades, zonas, barrio, creado_en, fotos(path, orden)")
         .eq("autor_id", id)
+        .order("creado_en", { ascending: false }),
+      admin
+        .from("salas")
+        .select("id, nombre, barrio, situacion")
+        .eq("propuesta_por", id)
+        .order("creado_en", { ascending: false }),
+      admin
+        .from("torneos")
+        .select("id, nombre, fecha_inicio, situacion")
+        .eq("propuesto_por", id)
         .order("creado_en", { ascending: false }),
     ]);
 
@@ -176,6 +191,68 @@ export default async function PaginaCuentaAdmin({
           })}
         </ul>
       )}
+
+      {/* Lo que cargó al mapa y al calendario. Es lo que hace que valga la
+          pena entrar acá desde un "propuesta por": ver todo lo de esa
+          persona junto, no sólo la fila que estabas mirando. */}
+      {(salasPropias?.length || torneosPropios?.length) ? (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold">Aportes a la comunidad</h2>
+          <p className="mt-1 text-sm text-texto-suave">
+            Salas y torneos que cargó esta cuenta.
+          </p>
+
+          {salasPropias && salasPropias.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {salasPropias.map((s) => (
+                <li
+                  key={s.id}
+                  className="rounded-xl border border-borde bg-fondo-elevado p-3 flex items-center gap-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{s.nombre}</p>
+                    <p className="text-xs text-texto-suave">
+                      Sala{s.barrio ? ` · ${s.barrio}` : ""}
+                      {s.situacion !== "aprobada" && ` · ${s.situacion}`}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/admin/salas/${s.id}`}
+                    className="shrink-0 rounded-lg border border-borde px-3 py-1.5 text-sm hover:border-acento"
+                  >
+                    Ver
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {torneosPropios && torneosPropios.length > 0 && (
+            <ul className="mt-2 space-y-2">
+              {torneosPropios.map((t) => (
+                <li
+                  key={t.id}
+                  className="rounded-xl border border-borde bg-fondo-elevado p-3 flex items-center gap-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{t.nombre}</p>
+                    <p className="text-xs text-texto-suave">
+                      Torneo · {t.fecha_inicio ?? "sin fecha"}
+                      {t.situacion !== "aprobado" && ` · ${t.situacion}`}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/admin/torneos/${t.id}`}
+                    className="shrink-0 rounded-lg border border-borde px-3 py-1.5 text-sm hover:border-acento"
+                  >
+                    Ver
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }

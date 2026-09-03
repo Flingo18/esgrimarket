@@ -12,6 +12,20 @@ import {
 
 export const metadata: Metadata = { title: "Editar sala" };
 
+
+/** Quién propuso esto, resuelto a algo legible y con enlace a su cuenta. */
+async function autorDe(
+  admin: ReturnType<typeof crearClienteAdmin>,
+  id: string | null,
+): Promise<{ id: string; etiqueta: string } | null> {
+  if (!id) return null;
+  const [{ data: perfil }, { data: cuenta }] = await Promise.all([
+    admin.from("perfiles").select("nombre").eq("id", id).maybeSingle(),
+    admin.auth.admin.getUserById(id),
+  ]);
+  return { id, etiqueta: perfil?.nombre?.trim() || cuenta.user?.email || "cuenta borrada" };
+}
+
 export default async function PaginaEditarSala({
   params,
 }: PageProps<"/admin/salas/[id]">) {
@@ -29,11 +43,13 @@ export default async function PaginaEditarSala({
   const admin = crearClienteAdmin();
   const { data: sala } = await admin
     .from("salas")
-    .select("id, nombre, direccion, barrio, zona, telefono, instagram, nota, lat, lng, activa, situacion")
+    .select("id, nombre, direccion, barrio, zona, telefono, instagram, nota, lat, lng, activa, situacion, propuesta_por")
     .eq("id", id)
     .single();
 
   if (!sala) notFound();
+
+  const autor = await autorDe(admin, sala.propuesta_por);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -42,6 +58,14 @@ export default async function PaginaEditarSala({
         <Link href="/admin" className="text-acento underline">
           Volver al panel
         </Link>
+        {autor && (
+          <>
+            {" · propuesta por "}
+            <Link href={`/admin/usuarios/${autor.id}`} className="text-acento underline">
+              {autor.etiqueta}
+            </Link>
+          </>
+        )}
         {sala.situacion !== "aprobada" && ` · Estado: ${sala.situacion}`}
       </p>
 

@@ -13,6 +13,20 @@ import {
 
 export const metadata: Metadata = { title: "Editar torneo" };
 
+
+/** Quién propuso esto, resuelto a algo legible y con enlace a su cuenta. */
+async function autorDe(
+  admin: ReturnType<typeof crearClienteAdmin>,
+  id: string | null,
+): Promise<{ id: string; etiqueta: string } | null> {
+  if (!id) return null;
+  const [{ data: perfil }, { data: cuenta }] = await Promise.all([
+    admin.from("perfiles").select("nombre").eq("id", id).maybeSingle(),
+    admin.auth.admin.getUserById(id),
+  ]);
+  return { id, etiqueta: perfil?.nombre?.trim() || cuenta.user?.email || "cuenta borrada" };
+}
+
 export default async function PaginaEditarTorneo({
   params,
 }: PageProps<"/admin/torneos/[id]">) {
@@ -32,7 +46,7 @@ export default async function PaginaEditarTorneo({
     await Promise.all([
     admin
       .from("torneos")
-      .select("id, nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, armas, situacion, actualizado_en")
+      .select("id, nombre, organizador_tipo, federacion, sala_id, fecha_inicio, fecha_fin, cierre_inscripcion, lugar, contacto_inscripcion, notas, armas, situacion, actualizado_en, propuesto_por")
       .eq("id", id)
       .single(),
     admin
@@ -52,6 +66,8 @@ export default async function PaginaEditarTorneo({
 
   if (!torneo) notFound();
 
+  const autor = await autorDe(admin, torneo.propuesto_por);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">Editar torneo</h1>
@@ -62,6 +78,14 @@ export default async function PaginaEditarTorneo({
         {" · "}
         Última modificación {haceCuanto(torneo.actualizado_en)}
         {torneo.situacion !== "aprobado" && ` · ${torneo.situacion}`}
+        {autor && (
+          <>
+            {" · propuesto por "}
+            <Link href={`/admin/usuarios/${autor.id}`} className="text-acento underline">
+              {autor.etiqueta}
+            </Link>
+          </>
+        )}
       </p>
 
       <div className="mt-8">

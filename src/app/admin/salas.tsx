@@ -1,12 +1,19 @@
 "use client";
 
+import Link from "next/link";
+
 import { useActionState } from "react";
 
 import { moderarSala } from "@/acciones/salas";
 import { ZONAS, type ZonaId } from "@/lib/geo";
 
+
+/** Quién propuso la fila, ya resuelto a algo legible. */
+export type Autor = { id: string; etiqueta: string } | null;
+
 export type SalaPendiente = {
   id: string;
+  propuesta_por: string | null;
   nombre: string;
   direccion: string | null;
   barrio: string | null;
@@ -18,7 +25,13 @@ export type SalaPendiente = {
   lng: number | null;
 };
 
-export function FilaSalaPendiente({ sala: s }: { sala: SalaPendiente }) {
+export function FilaSalaPendiente({
+  sala: s,
+  quien,
+}: {
+  sala: SalaPendiente;
+  quien?: Autor;
+}) {
   const [estado, accion, guardando] = useActionState(moderarSala, {});
 
   const ubicacion = [
@@ -31,6 +44,16 @@ export function FilaSalaPendiente({ sala: s }: { sala: SalaPendiente }) {
 
   return (
     <li className="rounded-xl border border-borde bg-fondo-elevado p-3">
+      {/* Quién la mandó, arriba: al decidir si aprobar, saber de quién viene
+          es parte de la decisión. */}
+      {quien && (
+        <p className="text-xs text-texto-suave">
+          Propuesta por{" "}
+          <Link href={`/admin/usuarios/${quien.id}`} className="text-acento underline">
+            {quien.etiqueta}
+          </Link>
+        </p>
+      )}
       <p className="font-medium">{s.nombre}</p>
       <p className="text-sm text-texto-suave">{ubicacion || "Sin ubicación"}</p>
 

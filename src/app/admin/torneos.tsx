@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useActionState } from "react";
 
 import { moderarTorneo } from "@/acciones/torneos";
@@ -7,6 +9,7 @@ import { interpretarContacto, nombreOrganizador, rangoDeFechas } from "@/lib/tor
 
 export type TorneoPendiente = {
   id: string;
+  propuesto_por: string | null;
   nombre: string;
   federacion: string | null;
   salas: { nombre: string } | null;
@@ -18,7 +21,13 @@ export type TorneoPendiente = {
   notas: string | null;
 };
 
-export function FilaTorneoPendiente({ torneo: t }: { torneo: TorneoPendiente }) {
+export function FilaTorneoPendiente({
+  torneo: t,
+  quien,
+}: {
+  torneo: TorneoPendiente;
+  quien?: { id: string; etiqueta: string } | null;
+}) {
   const [estado, accion, guardando] = useActionState(moderarTorneo, {});
   const contacto = interpretarContacto(t.contacto_inscripcion);
 
@@ -29,6 +38,14 @@ export function FilaTorneoPendiente({ torneo: t }: { torneo: TorneoPendiente }) 
         {t.fecha_inicio
           ? ` · ${rangoDeFechas(t.fecha_inicio, t.fecha_fin)}`
           : " · sin fecha"}
+        {quien && (
+          <>
+            {" · propuesto por "}
+            <Link href={`/admin/usuarios/${quien.id}`} className="text-acento underline">
+              {quien.etiqueta}
+            </Link>
+          </>
+        )}
       </p>
       <p className="font-medium">{t.nombre}</p>
       {t.lugar && <p className="text-sm text-texto-suave">{t.lugar}</p>}
