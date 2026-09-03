@@ -84,9 +84,18 @@ export default function Mapa({
               </>
             )}
             <br />
-            <a href={`/salas/${s.id}/corregir`}>
-              <strong>¿Falta un dato o está mal? Corregilo</strong>
+            {/* Coordenadas y no la dirección escrita: el punto es exacto y no
+                depende de que Google interprete bien "Rivera Indarte 3079".
+                Con api=1 abre la app de Maps en el celular, no el navegador. */}
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <strong>Cómo llegar</strong>
             </a>
+            <br />
+            <a href={`/salas/${s.id}/corregir`}>¿Falta un dato o está mal?</a>
           </Popup>
         </Marker>
       ))}
