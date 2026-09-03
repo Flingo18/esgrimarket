@@ -84,7 +84,9 @@ export default function Mapa({
               </>
             )}
             <br />
-            <a href={`/salas/${s.id}/corregir`}>¿Está mal algo? Corregilo</a>
+            <a href={`/salas/${s.id}/corregir`}>
+              <strong>¿Falta un dato o está mal? Corregilo</strong>
+            </a>
           </Popup>
         </Marker>
       ))}
