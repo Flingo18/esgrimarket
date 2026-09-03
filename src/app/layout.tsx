@@ -62,6 +62,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               organiza.
             </p>
             <p>
+              <Link href="/como-funciona" className="underline hover:text-texto">
+                Cómo funciona
+              </Link>
+              {" · "}
               <Link href="/privacidad" className="underline hover:text-texto">
                 Privacidad
               </Link>

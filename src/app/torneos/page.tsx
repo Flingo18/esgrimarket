@@ -18,6 +18,7 @@ import {
   type Categoria,
 } from "@/lib/torneos";
 import { AvisoTorneos } from "@/components/aviso-torneos";
+import { ComoFunciona } from "@/components/como-funciona";
 
 export const metadata: Metadata = {
   title: "Calendario de torneos",
@@ -146,6 +147,10 @@ export default async function PaginaTorneos({ searchParams }: PageProps<"/torneo
         Fechas de todas las federaciones, con el cierre de inscripción y dónde
         anotarse.
       </p>
+
+      <div className="mt-4">
+        <ComoFunciona compacto />
+      </div>
 
       <AvisoTorneos />
 

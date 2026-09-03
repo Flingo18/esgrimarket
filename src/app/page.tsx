@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Filtros } from "@/components/filtros";
 import { TarjetaPublicacion } from "@/components/tarjeta-publicacion";
+import { ComoFunciona } from "@/components/como-funciona";
 import { TorneosProximos } from "@/components/torneos-proximos";
 import { obtenerCotizacion } from "@/lib/dolar";
 import { listarPublicaciones, type Filtros as TipoFiltros } from "@/lib/publicaciones";
@@ -34,7 +35,12 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-6">
+      {/* Arriba de todo, no al pie: a quien administra el sitio le escriben
+          para pedirle que cargue salas y torneos, y eso pasa porque la página
+          no dice en ningún lado que los carga la comunidad. */}
+      <ComoFunciona />
+
+      <div className="mt-8 mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">
           Equipamiento de esgrima usado en Argentina
         </h1>

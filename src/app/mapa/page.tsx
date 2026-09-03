@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ComoFunciona } from "@/components/como-funciona";
 import { MapaCargador } from "@/components/mapa-cargador";
 import type { SalaMapa, ZonaMapa } from "@/components/mapa";
 import { crearClienteServidor } from "@/lib/supabase/server";
@@ -49,6 +50,10 @@ export default async function PaginaMapa() {
         Las salas de esgrima del país
         {zonas.length > 0 && ", y las zonas donde se puede retirar lo publicado"}.
       </p>
+
+      <div className="mt-4">
+        <ComoFunciona />
+      </div>
 
       <div className="mt-6">
         <MapaCargador salas={conMapa} zonas={zonas} />
