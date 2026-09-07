@@ -1,32 +1,62 @@
 import "server-only";
 
-import nodemailer, { type Transporter } from "nodemailer";
-
 /**
- * Envío de avisos por mail.
+ * Envío de avisos por mail, con Resend.
  *
- * Va por SMTP de Gmail con una contraseña de aplicación, igual que la
- * autenticación. WhatsApp automático quedaría mejor, pero requiere la API de
- * WhatsApp Business con plantillas aprobadas por Meta: no es algo que se
- * pueda encender desde acá.
+ * Se manda contra la API por HTTP y no por SMTP: es un POST, así que no hace
+ * falta cliente de correo ni mantener una conexión abierta en una función que
+ * vive unos segundos.
  *
- * Si faltan las credenciales, no se manda nada y se registra: publicar nunca
- * puede fallar porque el aviso no salió.
+ * Ojo: esto NO es el mail de ingreso. Los códigos para entrar los manda
+ * Supabase con su propia configuración, que es aparte y no se toca acá.
+ *
+ * Si falta la clave no se manda nada y se registra: publicar nunca puede
+ * fallar porque el aviso no salió.
  */
-let transporte: Transporter | null = null;
+const REMITENTE = "Esgrimarket <avisos@esgrimarket.com.ar>";
 
-function obtenerTransporte(): Transporter | null {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) return null;
+type Mail = {
+  para: string;
+  asunto: string;
+  texto: string;
+  html: string;
+};
 
-  transporte ??= nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: { user, pass },
-  });
-  return transporte;
+async function mandar(m: Mail): Promise<boolean> {
+  const clave = process.env.RESEND_API_KEY;
+  if (!clave) {
+    console.warn("Aviso no enviado: falta RESEND_API_KEY.");
+    return false;
+  }
+
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${clave}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: REMITENTE,
+        to: [m.para],
+        subject: m.asunto,
+        text: m.texto,
+        html: m.html,
+      }),
+    });
+
+    if (!r.ok) {
+      // El cuerpo dice el motivo real (dominio sin verificar, clave inválida),
+      // y sin eso el error es imposible de diagnosticar desde los logs.
+      console.error("Resend rechazó el aviso:", r.status, await r.text());
+      return false;
+    }
+    return true;
+  } catch (e) {
+    // Un aviso que no sale no puede romper nada: sólo se registra.
+    console.error("Error mandando aviso:", e);
+    return false;
+  }
 }
 
 export type AvisoCoincidencia = {
@@ -38,12 +68,6 @@ export type AvisoCoincidencia = {
 };
 
 export async function avisarCoincidencia(a: AvisoCoincidencia): Promise<boolean> {
-  const t = obtenerTransporte();
-  if (!t) {
-    console.warn("Aviso no enviado: faltan GMAIL_USER / GMAIL_APP_PASSWORD.");
-    return false;
-  }
-
   const buscaba = a.queBuscaba ? `“${a.queBuscaba}”` : "lo que estabas buscando";
 
   const texto = `Alguien publicó algo que coincide con ${buscaba}:
@@ -70,20 +94,12 @@ Podés dejar de recibir estos avisos desde tu cuenta en Esgrimarket.`;
   </p>
 </div>`;
 
-  try {
-    await t.sendMail({
-      from: `"Esgrimarket" <${process.env.GMAIL_USER}>`,
-      to: a.para,
-      subject: `Apareció ${a.titulo}`,
-      text: texto,
-      html,
-    });
-    return true;
-  } catch (e) {
-    // Un aviso que no sale no puede romper nada: sólo se registra.
-    console.error("Error mandando aviso:", e);
-    return false;
-  }
+  return mandar({
+    para: a.para,
+    asunto: `Apareció ${a.titulo}`,
+    texto,
+    html,
+  });
 }
 
 export type AvisoTorneo = {
@@ -103,12 +119,6 @@ export type AvisoTorneo = {
  * hace que alguien abra el mail hoy y no el mes que viene.
  */
 export async function avisarTorneo(a: AvisoTorneo): Promise<boolean> {
-  const t = obtenerTransporte();
-  if (!t) {
-    console.warn("Aviso de torneo no enviado: faltan GMAIL_USER / GMAIL_APP_PASSWORD.");
-    return false;
-  }
-
   const asunto = a.cierre
     ? `${a.nombre} — cierra la inscripción el ${a.cierre}`
     : `Torneo nuevo: ${a.nombre}`;
@@ -147,17 +157,5 @@ Podés dejar de recibir estos avisos desde tu cuenta en Esgrimarket.`;
   </p>
 </div>`;
 
-  try {
-    await t.sendMail({
-      from: `"Esgrimarket" <${process.env.GMAIL_USER}>`,
-      to: a.para,
-      subject: asunto,
-      text: texto,
-      html,
-    });
-    return true;
-  } catch (e) {
-    console.error("Error mandando aviso de torneo:", e);
-    return false;
-  }
+  return mandar({ para: a.para, asunto, texto, html });
 }
