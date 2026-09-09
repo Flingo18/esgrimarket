@@ -159,7 +159,12 @@ export function FormularioPublicar({
         const ruta = `${user.id}/${crypto.randomUUID()}.jpg`;
         const { error } = await supabase.storage
           .from("fotos")
-          .upload(ruta, chico, { contentType: "image/jpeg" });
+          .upload(ruta, chico, {
+            contentType: "image/jpeg",
+            // Sin esto Supabase sirve la foto con `no-cache` y el optimizador
+            // de imágenes la vuelve a procesar cada vez que alguien la mira.
+            cacheControl: "31536000",
+          });
 
         if (!error) nuevas.push(ruta);
       }
