@@ -21,6 +21,8 @@ import { AvisoTorneos } from "@/components/aviso-torneos";
 import { ComoFunciona } from "@/components/como-funciona";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/torneos" },
+  openGraph: { url: "/torneos" },
   title: "Calendario de torneos",
   description:
     "Todos los torneos de esgrima de Argentina, con fechas de cierre de inscripción y dónde anotarse.",

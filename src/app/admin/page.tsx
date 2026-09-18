@@ -332,6 +332,19 @@ function FilaTorneo({
           {torneo.fecha_inicio ?? "sin fecha"}
           {" · "}
           {nombreOrganizador(torneo.federacion, torneo.salas?.nombre)}
+          {" · "}
+          {/* Lo recibía y no lo mostraba: en los pendientes se veía quién lo
+              cargó y en la lista de aprobados se perdía. */}
+          {torneo.quien ? (
+            <Link
+              href={`/admin/usuarios/${torneo.quien.id}`}
+              className="text-acento underline"
+            >
+              {torneo.quien.etiqueta}
+            </Link>
+          ) : (
+            "cargado en la importación"
+          )}
         </p>
       </div>
       <Link

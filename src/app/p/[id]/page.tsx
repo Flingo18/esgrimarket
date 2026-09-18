@@ -48,7 +48,11 @@ export async function generateMetadata({
   return {
     title: p.titulo as string,
     description: (p.descripcion as string) || "Equipamiento de esgrima en venta.",
+    // Cada ficha es su propia página. Sin esto heredaba el canonical del
+    // layout y le decía a Google que era una copia del inicio.
+    alternates: { canonical: `/p/${id}` },
     openGraph: {
+      url: `/p/${id}`,
       title: p.titulo as string,
       description: (p.descripcion as string) || "Equipamiento de esgrima en venta.",
       images: primera ? [urlFoto(primera.path)] : [],

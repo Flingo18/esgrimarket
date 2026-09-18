@@ -4,6 +4,8 @@ import Link from "next/link";
 import { RADIO_DISPLAY_M, RADIO_OFFSET_M } from "@/lib/geo";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/privacidad" },
+  openGraph: { url: "/privacidad" },
   title: "Privacidad",
   description: "Qué datos guarda Esgrimarket, para qué, y cómo borrarlos.",
 };

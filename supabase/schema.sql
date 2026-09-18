@@ -1,3 +1,13 @@
+-- Esquema de referencia de Esgrimarket.
+--
+-- La base VIVA es la autoridad: los cambios se aplican como migraciones en
+-- Supabase y después se reflejan acá. Este archivo existe para poder leer el
+-- modelo entero con las explicaciones de por qué cada cosa es como es, que es
+-- lo que un volcado automático no conserva.
+--
+-- Las funciones del sistema de correcciones y de avisos viven en las
+-- migraciones; acá están las tablas y las reglas principales.
+
 -- ════════════════════════════════════════════════════════════════════
 --  Esgrimarket — esquema completo
 --  Correr en Supabase → SQL Editor. Es idempotente.
@@ -222,6 +232,28 @@ create table if not exists torneos (
         or (organizador_tipo = 'club' and federacion is null))
 );
 
+-- ───────────────────── Búsquedas guardadas ──────────────────────────
+--
+-- "Avisame cuando aparezca un florete talle 5". Es el equivalente de
+-- avisos_torneos pero para productos, y a diferencia de aquel acá sí puede
+-- haber varias por persona: buscar una careta y buscar un sable son dos
+-- búsquedas distintas, no una preferencia.
+create table if not exists busquedas (
+  id          uuid primary key default gen_random_uuid(),
+  usuario_id  uuid not null references auth.users(id) on delete cascade,
+  texto       text,
+  categoria   text,
+  tipo        text,
+  arma        text,
+  mano        text,
+  talle       text,
+  precio_max  numeric,
+  moneda      text not null default 'USD',
+  activa      boolean not null default true,
+  avisos      integer not null default 0,
+  creado_en   timestamptz not null default now()
+);
+
 -- ────────────────────── Avisos de torneos ───────────────────────────
 --
 -- "Avisame cuando haya un torneo de espada". Mismo mecanismo que las
@@ -407,7 +439,7 @@ security definer
 stable
 set search_path = public
 as $$
-  select coalesce((select es_admin from perfiles where id = auth.uid()), false);
+  select coalesce(rol_efectivo(auth.uid()) = 'admin', false);
 $$;
 
 revoke all on function es_admin() from public;

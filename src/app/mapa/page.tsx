@@ -13,6 +13,8 @@ import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/mapa" },
+  openGraph: { url: "/mapa" },
   title: "Mapa de salas",
   description:
     "Dónde se practica esgrima en Argentina, y dónde se puede retirar lo que está publicado.",

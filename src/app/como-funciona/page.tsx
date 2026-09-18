@@ -4,6 +4,8 @@ import Link from "next/link";
 import { avalesNecesarios } from "@/lib/correcciones-servidor";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/como-funciona" },
+  openGraph: { url: "/como-funciona" },
   title: "Cómo funciona",
   description:
     "Esgrimarket lo mantiene la comunidad de esgrima: las salas, los torneos y las correcciones los carga la gente que entrena. La administración sólo aprueba.",

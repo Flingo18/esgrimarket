@@ -24,9 +24,10 @@ export const metadata: Metadata = {
   },
   description: DESCRIPCION,
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  // Sin esto, cada URL con filtros distintos parece una página nueva y
-  // compiten entre sí en los resultados.
-  alternates: { canonical: "/" },
+  // El canonical NO va acá. Puesto en el layout lo heredaban todas las
+  // páginas, así que el calendario, el mapa y las 28 fichas le declaraban a
+  // Google ser una copia del inicio — y Google deja de indexar lo que se
+  // declara duplicado. Cada página pone el suyo.
   openGraph: {
     type: "website",
     locale: "es_AR",

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   description:
     "Qué necesitás para empezar esgrima, qué conviene comprar usado y qué no, y dónde conseguirlo en Argentina. Guía hecha por la comunidad.",
   alternates: { canonical: "/comprar-equipamiento-esgrima-argentina" },
+  openGraph: { url: "/comprar-equipamiento-esgrima-argentina" },
 };
 
 /**

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Filtros } from "@/components/filtros";
@@ -7,6 +8,12 @@ import { TorneosProximos } from "@/components/torneos-proximos";
 import { obtenerCotizacion } from "@/lib/dolar";
 import { listarPublicaciones, type Filtros as TipoFiltros } from "@/lib/publicaciones";
 import type { Arma, Categoria, Mano } from "@/lib/taxonomy";
+
+// Propio y no heredado: el inicio es el inicio, el resto no lo es.
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { url: "/" },
+};
 
 export default async function Inicio({ searchParams }: PageProps<"/">) {
   const params = await searchParams;

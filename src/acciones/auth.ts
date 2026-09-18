@@ -7,13 +7,18 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 /**
  * Manda el mail de ingreso.
  *
- * El plan gratuito de Supabase no deja editar los templates, y el que viene
- * de fábrica manda un LINK, no un código. Por eso el flujo es por link
- * aunque el código sea mejor: el link se abre en el navegador de la app de
- * mail y la sesión puede quedar iniciada en el lugar equivocado.
+ * El flujo es por CÓDIGO: la plantilla de Supabase manda `{{ .Token }}` y la
+ * persona lo copia en el formulario. Se eligió así porque un link se abre en
+ * el navegador interno de la app de mail y la sesión quedaba iniciada en el
+ * lugar equivocado.
  *
- * Cuando haya SMTP propio: cambiar el template a `{{ .Token }}` y volver a
- * enganchar `validarCodigo`, que ya está escrito más abajo.
+ * `/auth/confirmar` sigue existiendo como respaldo por si a alguien le llega
+ * un link viejo, y acepta las tres formas en que Supabase puede mandarlo
+ * (`code`, `token_hash` y el `#access_token` del fragmento).
+ *
+ * Ojo: este mail NO sale por Resend. Lo manda Supabase con el SMTP que esté
+ * configurado en su panel; los avisos de la aplicación son otra cosa, en
+ * `src/lib/avisos.ts`.
  */
 export async function pedirCodigo(
   _estadoPrevio: unknown,
