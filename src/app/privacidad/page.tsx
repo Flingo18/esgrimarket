@@ -26,13 +26,14 @@ export default function PaginaPrivacidad() {
         Política de privacidad
       </h1>
       <p className="mt-1 text-sm text-texto-suave">
-        Última actualización: 29 de agosto de 2026
+        Última actualización: 19 de octubre de 2026
       </p>
 
       <p className="mt-6 text-texto-suave">
         Esgrimarket es un proyecto gratuito para la comunidad de esgrima de
-        Argentina. No vendemos datos, no hacemos publicidad dirigida y no
-        usamos cookies de seguimiento.
+        Argentina. No vendemos datos y no hacemos publicidad dirigida. Sí
+        usamos una herramienta de medición para entender cómo se usa el sitio;
+        está explicado abajo.
       </p>
 
       <Seccion titulo="Qué guardamos">
@@ -77,6 +78,25 @@ export default function PaginaPrivacidad() {
         <p>
           En el mapa se dibuja un círculo de {RADIO_DISPLAY_M} metros alrededor
           de ese punto ya corrido. Nadie puede deducir tu dirección, ni nosotros.
+        </p>
+      </Seccion>
+
+      <Seccion titulo="Cómo medimos el uso del sitio">
+        <p>
+          Usamos <strong className="text-texto">Microsoft Clarity</strong> para
+          entender qué se mira y qué no funciona. Guarda cookies en tu
+          navegador y registra cómo se usa la página: qué tocás, hasta dónde
+          bajás, por dónde movés el mouse.
+        </p>
+        <p>
+          No sabemos quién sos: no se le manda tu nombre, tu mail ni tu
+          teléfono. Sirve para ver, por ejemplo, que mucha gente abandona una
+          pantalla en el mismo punto, y arreglarla.
+        </p>
+        <p>
+          Si no querés que te mida, podés usar el modo privado del navegador o
+          activar &ldquo;No rastrear&rdquo;, y cualquier bloqueador de rastreo
+          lo frena.
         </p>
       </Seccion>
 

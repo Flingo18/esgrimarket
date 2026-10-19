@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import Script from "next/script";
 
 import Link from "next/link";
 
@@ -121,6 +122,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </p>
           </div>
         </footer>
+
+        {/* Microsoft Clarity: mapas de calor y grabación de sesiones.
+            `afterInteractive` lo carga recién cuando la página ya responde,
+            así no compite con el contenido por el ancho de banda.
+            Ojo: esto pone cookies y graba lo que hace la gente en pantalla.
+            La política de privacidad lo declara, y tiene que seguir
+            declarándolo mientras esto esté acá. */}
+        <Script id="clarity" strategy="afterInteractive">
+          {`(function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "z06cb9kfh0");`}
+        </Script>
       </body>
     </html>
   );
