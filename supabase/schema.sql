@@ -129,6 +129,12 @@ create table if not exists publicaciones (
   -- canal por el que Felipe vende sus medias estampadas.
   es_oficial    boolean not null default false,
 
+  -- Vínculo con el mercadito de Notion. Sólo lo llevan las publicaciones que
+  -- vienen de esa base; las que carga la comunidad lo dejan en null. Es lo que
+  -- permite que la sincronización actualice en vez de duplicar.
+  notion_id        text unique,
+  notion_editado_en timestamptz,
+
   -- Sin vencimiento, a los seis meses la página es un cementerio de
   -- publicaciones vendidas que nadie marcó.
   vence_en      timestamptz not null default now() + interval '45 days',
