@@ -121,6 +121,74 @@ Podés dejar de recibir estos avisos desde tu cuenta en Esgrimarket.`;
   });
 }
 
+export type AvisoVencimiento = {
+  para: string;
+  titulo: string;
+  /** Fecha de vencimiento ya escrita en castellano: "26 de octubre". */
+  cuando: string;
+  url: string;
+};
+
+/**
+ * "Tu publicación vence en una semana" / "se venció".
+ *
+ * Sale dos veces por publicación: una a los siete días de margen y otra el
+ * día que efectivamente se cayó del listado. El primero existe para que no
+ * llegue a desaparecer; el segundo, para el que igual se la perdió.
+ *
+ * Al que ya vendió se le dice explícitamente que no haga nada. Es la mitad
+ * del valor de estos mails: el vencimiento está para limpiar lo que ya no se
+ * consigue, y alguien que renueva por inercia lo que vendió hace un mes hace
+ * exactamente el daño que el vencimiento venía a evitar.
+ *
+ * El link lleva al listado, no reactiva. Un GET que reactivara se dispararía
+ * solo: los servidores de correo visitan los links para escanearlos, como ya
+ * pasa con los de ingreso (ver `src/app/ingresar/page.tsx`).
+ */
+export async function avisarVencimiento(
+  a: AvisoVencimiento & { vencida: boolean },
+): Promise<boolean> {
+  const boton = a.vencida ? "Volver a publicarla" : "Renovarla";
+
+  const asunto = a.vencida
+    ? "Tu publicación en Esgrimarket se venció"
+    : "Tu publicación en Esgrimarket vence en una semana";
+
+  const entrada = a.vencida
+    ? `Tu publicación ${a.titulo} se venció y ya no se ve en el sitio.
+
+Si seguís vendiéndola, volvé a activarla con un clic.`
+    : `Tu publicación ${a.titulo} vence el ${a.cuando}. Después de esa fecha deja de verse en el sitio.
+
+Si ya la vendiste, no hagas nada.
+Si seguís vendiéndola, renovala y queda otros 45 días.`;
+
+  const texto = `${entrada}
+
+${a.url}
+
+Recibís esto porque publicaste en Esgrimarket.`;
+
+  const cuerpoHtml = a.vencida
+    ? `<p style="font-size:15px;margin:0 0 16px">Tu publicación <strong>${esc(a.titulo)}</strong> se venció y ya no se ve en el sitio.</p>
+  <p style="font-size:15px;margin:0 0 20px">Si seguís vendiéndola, volvé a activarla con un clic.</p>`
+    : `<p style="font-size:15px;margin:0 0 16px">Tu publicación <strong>${esc(a.titulo)}</strong> vence el <strong>${esc(a.cuando)}</strong>. Después de esa fecha deja de verse en el sitio.</p>
+  <p style="font-size:15px;margin:0 0 20px">Si ya la vendiste, no hagas nada.<br>Si seguís vendiéndola, renovala y queda otros 45 días.</p>`;
+
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#14181d">
+  ${cuerpoHtml}
+  <p style="margin:0 0 24px">
+    <a href="${esc(a.url)}" style="background:#0b6bcb;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;display:inline-block;font-weight:500">${boton}</a>
+  </p>
+  <p style="font-size:13px;color:#5b6672;border-top:1px solid #e2e6ea;padding-top:16px;margin:0">
+    Recibís esto porque publicaste en Esgrimarket. Las publicaciones vencen a
+    los 45 días para que el mercadito no se llene de cosas que ya se vendieron.
+  </p>
+</div>`;
+
+  return mandar({ para: a.para, asunto, texto, html });
+}
+
 export type AvisoTorneo = {
   para: string;
   nombre: string;

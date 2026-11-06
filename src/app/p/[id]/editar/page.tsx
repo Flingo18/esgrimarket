@@ -23,7 +23,7 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
     supabase
       .from("publicaciones")
       .select(
-        "id, autor_id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, monto, unidades, zonas, barrio, sala_entrega_id, fotos(path, orden)",
+        "id, autor_id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, monto, unidades, zonas, barrio, sala_entrega_id, url_contacto, fotos(path, orden)",
       )
       .eq("id", id)
       .single(),
@@ -31,7 +31,10 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
     supabase.from("salas").select("id, nombre, barrio").order("nombre"),
   ]);
 
-  const { data: puedeStock } = await supabase.rpc("puede_cargar_stock");
+  const [{ data: puedeStock }, { data: esAdmin }] = await Promise.all([
+    supabase.rpc("puede_cargar_stock"),
+    supabase.rpc("es_admin"),
+  ]);
 
   if (!p) notFound();
 
@@ -60,6 +63,7 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
     zonas: p.zonas,
     barrio: p.barrio,
     sala_entrega_id: p.sala_entrega_id,
+    url_contacto: p.url_contacto,
     fotos: [...p.fotos].sort((a, b) => a.orden - b.orden).map((f) => f.path),
   };
 
@@ -78,6 +82,7 @@ export default async function PaginaEditar({ params }: PageProps<"/p/[id]/editar
           salas={salas ?? []}
           inicial={inicial}
           puedeCargarStock={puedeStock ?? false}
+          esAdmin={esAdmin ?? false}
         />
       </div>
     </div>

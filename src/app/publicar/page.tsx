@@ -35,6 +35,11 @@ export default async function PaginaPublicar() {
     supabase.rpc("puede_cargar_stock"),
   ]);
 
+  // Habilita el link de contacto en lugar del WhatsApp. La acción del
+  // servidor y la policy de la tabla lo vuelven a exigir: esto es sólo para
+  // no mostrar un campo que después sería rechazado.
+  const { data: esAdmin } = await supabase.rpc("es_admin");
+
   const { data: limiteCupo } = await supabase.rpc("limite_efectivo", {
     usuario: user.id,
   });
@@ -56,6 +61,7 @@ export default async function PaginaPublicar() {
           telefonoGuardado={perfil?.telefono_visible ?? ""}
           salas={salas ?? []}
           puedeCargarStock={puedeStock ?? false}
+          esAdmin={esAdmin ?? false}
           zonasDelPerfil={perfil?.zonas_entrega ?? []}
         />
       </div>

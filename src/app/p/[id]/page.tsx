@@ -3,8 +3,10 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { Precio } from "@/components/precio";
+import { contactoPermitido } from "@/lib/contacto-externo";
 import { obtenerCotizacion } from "@/lib/dolar";
 import { etiquetaZonas } from "@/lib/geo";
+import { jsonLd } from "@/lib/json-ld";
 import { urlFoto } from "@/lib/publicaciones";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
@@ -21,7 +23,7 @@ const COLUMNAS =
   "id, titulo, descripcion, categoria, tipo, armas_compatibles, es_electrica, " +
   "empunadura, talle, nivel_proteccion, mano, marca, anio, estado, moneda_base, " +
   "monto, unidades, zonas, barrio, situacion, es_oficial, creado_en, contactos, " +
-  "fotos(path, orden), salas(nombre, barrio)";
+  "url_contacto, fotos(path, orden), salas(nombre, barrio)";
 
 async function traer(id: string) {
   const supabase = await crearClienteServidor();
@@ -112,7 +114,7 @@ export default async function PaginaPublicacion({ params }: PageProps<"/p/[id]">
     <div className="mx-auto max-w-4xl px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(datosEstructurados) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(datosEstructurados) }}
       />
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-3">
@@ -161,7 +163,12 @@ export default async function PaginaPublicacion({ params }: PageProps<"/p/[id]">
               href={`/r/${p.id}`}
               className="mt-6 flex items-center justify-center gap-2 w-full rounded-lg bg-precio text-white font-medium py-3 hover:opacity-90"
             >
-              Contactar por WhatsApp
+              {/* Lo que se encarga no se consulta por WhatsApp: va al
+                  formulario de pedido, y el botón tiene que decirlo antes
+                  de que lo toquen. */}
+              {contactoPermitido(p.url_contacto as string | null)
+                ? "Pedir por formulario"
+                : "Contactar por WhatsApp"}
             </a>
           )}
 

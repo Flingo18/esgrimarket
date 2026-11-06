@@ -12,7 +12,7 @@ const BOTON =
   "w-full rounded-lg bg-acento text-acento-texto font-medium py-2.5 " +
   "hover:opacity-90 disabled:opacity-50";
 
-export function FormularioIngreso() {
+export function FormularioIngreso({ next }: { next?: string }) {
   const [pedido, accionPedir, pidiendo] = useActionState(pedirCodigo, {});
   const [validacion, accionValidar, validando] = useActionState(validarCodigo, {});
 
@@ -22,6 +22,9 @@ export function FormularioIngreso() {
     return (
       <form action={accionValidar} className="space-y-4">
         <input type="hidden" name="email" value={pedido.email} />
+        {/* Viaja hasta acá para que, al entrar, la persona vuelva a donde
+            iba: típicamente la publicación del mail de vencimiento. */}
+        {next && <input type="hidden" name="next" value={next} />}
 
         <div>
           <label htmlFor="codigo" className="block text-sm font-medium mb-1.5">

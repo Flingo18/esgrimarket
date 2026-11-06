@@ -1,3 +1,5 @@
+import { destinoSeguro } from "@/lib/destino";
+
 import { RescatarDesdeElFragmento } from "./cliente";
 
 /**
@@ -9,7 +11,5 @@ export default async function PaginaFragmento({
   searchParams,
 }: PageProps<"/auth/fragmento">) {
   const { next } = await searchParams;
-  return (
-    <RescatarDesdeElFragmento destino={typeof next === "string" ? next : "/"} />
-  );
+  return <RescatarDesdeElFragmento destino={destinoSeguro(next)} />;
 }

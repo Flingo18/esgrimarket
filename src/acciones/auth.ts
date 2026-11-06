@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { destinoSeguro } from "@/lib/destino";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 /**
@@ -60,6 +61,17 @@ export async function pedirCodigo(
   return { email };
 }
 
+/**
+ * A dónde mandar a alguien después de que entra.
+ *
+ * El destino llega por la URL, así que lo escribe cualquiera: se aceptan sólo
+ * rutas internas. Sin esto, un `?next=https://otro-sitio` convierte el login
+ * en un trampolín para mandar gente a cualquier lado desde nuestro dominio,
+ * que es el truco clásico de las estafas de phishing.
+ *
+ * `//otro.com` y `/\otro.com` empiezan con barra pero el navegador los lee
+ * como dominio externo, por eso se descartan aparte.
+ */
 /** Valida el código y deja la sesión abierta. */
 export async function validarCodigo(
   _estadoPrevio: unknown,
@@ -82,7 +94,7 @@ export async function validarCodigo(
     return { email, error: "El código no coincide o ya venció. Pedí uno nuevo." };
   }
 
-  redirect("/");
+  redirect(destinoSeguro(datos.get("next")));
 }
 
 export async function cerrarSesion() {

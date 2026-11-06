@@ -17,6 +17,9 @@
   --acento-suave: #e8f1fb;
   --precio: #0f7b4f;
   --alerta: #b42318;
+  /* Las barras de los gráficos. Es el acento, pero como token aparte: una
+     barra es un bloque grande y el acento se eligió para texto y botones. */
+  --grafico: #0b6bcb;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +35,9 @@
     --acento-suave: #14253a;
     --precio: #3ecf8e;
     --alerta: #f97066;
+    /* Más apagado que el acento a propósito: en un bloque del tamaño de una
+       barra, el celeste de los botones sobre fondo oscuro encandila. */
+    --grafico: #4590e8;
   }
 }
 
@@ -47,6 +53,7 @@
   --color-acento-suave: var(--acento-suave);
   --color-precio: var(--precio);
   --color-alerta: var(--alerta);
+  --color-grafico: var(--grafico);
   --font-sans: var(--font-geist-sans);
 }
 

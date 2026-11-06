@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useActionState, useMemo, useState } from "react";
 
 import { actualizarPublicacion, crearPublicacion } from "@/acciones/publicar";
+import { hostsPermitidos } from "@/lib/contacto-externo";
 import { RADIO_DISPLAY_M, ZONAS, difuminarUbicacion } from "@/lib/geo";
 import { CampoTelefono } from "@/components/campo-telefono";
 import { SelectorZonas } from "@/components/selector-zonas";
@@ -84,6 +85,7 @@ export type PublicacionEditable = {
   zonas: string[];
   barrio: string | null;
   sala_entrega_id: string | null;
+  url_contacto: string | null;
   fotos: string[];
 };
 
@@ -92,6 +94,7 @@ export function FormularioPublicar({
   salas,
   inicial,
   puedeCargarStock = false,
+  esAdmin = false,
   zonasDelPerfil = [],
 }: {
   telefonoGuardado: string;
@@ -99,6 +102,8 @@ export function FormularioPublicar({
   inicial?: PublicacionEditable;
   /** Admins y cuentas pagas. El permiso real lo aplica la base. */
   puedeCargarStock?: boolean;
+  /** Sólo admin: habilita el link de contacto. La policy de la tabla lo exige. */
+  esAdmin?: boolean;
   /** Zonas habituales del perfil: vienen marcadas de entrada. */
   zonasDelPerfil?: string[];
 }) {
@@ -480,6 +485,32 @@ export function FormularioPublicar({
             max={999}
             defaultValue={inicial?.unidades ?? 1}
             className={`${CAMPO} w-32`}
+          />
+        </Campo>
+      )}
+
+      {/*
+        Mandar gente fuera del sitio es exactamente el movimiento de una
+        estafa, así que el campo existe sólo para un admin y la policy de la
+        tabla lo vuelve a exigir del lado de la base.
+      */}
+      {esAdmin && (
+        <Campo
+          etiqueta="Link de contacto (sólo admin)"
+          ayuda={
+            `Si lo completás, el botón deja de abrir WhatsApp y lleva a este link. ` +
+            `Para lo que se encarga por formulario. Vacío = WhatsApp. ` +
+            `Dominios habilitados: ${hostsPermitidos().join(", ")}.`
+          }
+        >
+          <input
+            name="url_contacto"
+            type="url"
+            inputMode="url"
+            maxLength={500}
+            placeholder="https://…"
+            defaultValue={inicial?.url_contacto ?? ""}
+            className={CAMPO}
           />
         </Campo>
       )}

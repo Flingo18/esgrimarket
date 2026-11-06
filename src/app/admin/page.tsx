@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
+import { Crecimiento } from "./crecimiento";
 import { FilaUsuario } from "./fila";
 import { FilaSalaPendiente, type SalaPendiente } from "./salas";
 import { FilaTorneoPendiente, type TorneoPendiente } from "./torneos";
@@ -13,7 +14,11 @@ import { nombreOrganizador } from "@/lib/torneos";
 export const metadata: Metadata = { title: "Administración" };
 
 export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">) {
-  const { sala: resultadoSala, torneo: resultadoTorneo } = await searchParams;
+  const {
+    sala: resultadoSala,
+    torneo: resultadoTorneo,
+    cuentas,
+  } = await searchParams;
   const supabase = await crearClienteServidor();
   const {
     data: { user },
@@ -66,14 +71,22 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
     .eq("situacion", "pendiente")
     .order("creado_en", { ascending: true });
 
-  const { data: activasPorAutor } = await admin
+  const { data: publicacionesPorAutor } = await admin
     .from("publicaciones")
-    .select("autor_id")
-    .eq("situacion", "activa");
+    .select("autor_id, situacion, creado_en");
 
-  const conteo = new Map<string, number>();
-  for (const p of activasPorAutor ?? []) {
-    conteo.set(p.autor_id, (conteo.get(p.autor_id) ?? 0) + 1);
+  // Dos conteos y no uno: una cuenta con todo vencido tiene cero activas pero
+  // no es lo mismo que una que nunca publicó, y es justo la diferencia que
+  // hace falta para saber a quién escribirle.
+  const activasPorAutor = new Map<string, number>();
+  const totalPorAutor = new Map<string, number>();
+  let totalActivas = 0;
+  for (const p of publicacionesPorAutor ?? []) {
+    totalPorAutor.set(p.autor_id, (totalPorAutor.get(p.autor_id) ?? 0) + 1);
+    if (p.situacion === "activa") {
+      activasPorAutor.set(p.autor_id, (activasPorAutor.get(p.autor_id) ?? 0) + 1);
+      totalActivas += 1;
+    }
   }
 
   // Dos tercios del calendario ya pasaron. Lo que se edita es lo que viene
@@ -118,13 +131,34 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         rol: (perfil?.rol ?? "regular") as "admin" | "pro" | "regular",
         telefono: perfil?.telefono_visible ?? null,
         suspendido: perfil?.suspendido ?? false,
-        activas: conteo.get(u.id) ?? 0,
+        activas: activasPorAutor.get(u.id) ?? 0,
+        publicaciones: totalPorAutor.get(u.id) ?? 0,
         alta: u.created_at,
       };
     })
     .sort((a, b) => (a.alta < b.alta ? 1 : -1));
 
   const porRol = (r: string) => filas.filter((f) => f.rol === r).length;
+
+  // De 80 cuentas, las que publicaron alguna vez son un puñado. Encontrarlas
+  // a ojo en una lista ordenada por fecha de alta no se puede.
+  const conPublicaciones = filas.filter((f) => f.publicaciones > 0);
+  const filtro =
+    cuentas === "con" || cuentas === "sin" ? cuentas : "todas";
+  const cuentasVisibles =
+    filtro === "con"
+      ? // Ordenadas por volumen: quien más publicó es a quien más conviene
+        // mirar primero.
+        [...conPublicaciones].sort((a, b) => b.publicaciones - a.publicaciones)
+      : filtro === "sin"
+        ? filas.filter((f) => f.publicaciones === 0)
+        : filas;
+
+  const FILTROS = [
+    ["todas", "Todas", filas.length],
+    ["con", "Con publicaciones", conPublicaciones.length],
+    ["sin", "Sin ninguna", filas.length - conPublicaciones.length],
+  ] as const;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
@@ -173,7 +207,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
           ["Cuentas", filas.length],
           ["Pro", porRol("pro")],
           ["Publicaciones", publicaciones ?? 0],
-          ["Activas", activasPorAutor?.length ?? 0],
+          ["Activas", totalActivas],
         ].map(([label, valor]) => (
           <div
             key={String(label)}
@@ -184,6 +218,11 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
           </div>
         ))}
       </div>
+
+      <Crecimiento
+        altas={(usuarios?.users ?? []).map((u) => u.created_at)}
+        publicaciones={(publicacionesPorAutor ?? []).map((p) => p.creado_en)}
+      />
 
       {torneosPendientes && torneosPendientes.length > 0 && (
         <>
@@ -296,18 +335,46 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         ))}
       </ul>
 
-      <h2 className="mt-10 text-lg font-semibold">Cuentas</h2>
+      <h2 id="cuentas" className="mt-10 text-lg font-semibold scroll-mt-4">
+        Cuentas
+      </h2>
       <p className="text-sm text-texto-suave mt-1">
         <strong className="text-texto">Pro</strong> puede publicar hasta 200
         artículos y cargar stock. <strong className="text-texto">Regular</strong>{" "}
         publica de a una unidad, hasta 5 activas.
       </p>
 
-      <ul className="mt-4 space-y-2">
-        {filas.map((f) => (
-          <FilaUsuario key={f.id} usuario={f} esUnoMismo={f.id === user.id} />
+      {/* El hash devuelve a esta sección: sin él, filtrar te manda al tope de
+          una página larga y hay que volver a bajar cada vez. */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {FILTROS.map(([clave, etiqueta, n]) => (
+          <Link
+            key={clave}
+            href={
+              clave === "todas" ? "/admin#cuentas" : `/admin?cuentas=${clave}#cuentas`
+            }
+            className={`rounded-lg border px-3 py-1.5 text-sm ${
+              filtro === clave
+                ? "border-acento bg-acento text-acento-texto"
+                : "border-borde hover:border-acento"
+            }`}
+          >
+            {etiqueta} ({n})
+          </Link>
         ))}
-      </ul>
+      </div>
+
+      {cuentasVisibles.length === 0 ? (
+        <p className="mt-4 rounded-lg border border-borde bg-fondo-sutil px-3 py-3 text-sm text-texto-suave">
+          Ninguna cuenta queda en este filtro.
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {cuentasVisibles.map((f) => (
+            <FilaUsuario key={f.id} usuario={f} esUnoMismo={f.id === user.id} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

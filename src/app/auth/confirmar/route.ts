@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
+import { destinoSeguro } from "@/lib/destino";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 /**
@@ -20,7 +21,9 @@ import { crearClienteServidor } from "@/lib/supabase/server";
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const destino = searchParams.get("next") ?? "/";
+  // Este `next` llega en el link del mail, donde lo puede poner cualquiera:
+  // sin filtrar, abre la sesión y acto seguido manda la persona a otro sitio.
+  const destino = destinoSeguro(searchParams.get("next"));
   const supabase = await crearClienteServidor();
 
   const code = searchParams.get("code");

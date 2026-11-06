@@ -127,6 +127,7 @@ export type Database = {
           situacion: string;
           es_oficial: boolean;
           unidades: number;
+          url_contacto: string | null;
           vence_en: string;
           contactos: number;
           creado_en: string;
@@ -158,6 +159,7 @@ export type Database = {
           situacion?: string;
           es_oficial?: boolean;
           unidades?: number;
+          url_contacto?: string | null;
           vence_en?: string;
           contactos?: number;
           creado_en?: string;

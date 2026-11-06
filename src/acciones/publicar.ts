@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 
 import { avisarCoincidencia } from "@/lib/avisos";
+import { contactoPermitido, hostDe, hostsPermitidos } from "@/lib/contacto-externo";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { formatearARS, formatearUSD } from "@/lib/dolar";
 
@@ -144,6 +145,59 @@ function parsear(datos: FormData): { error: EstadoPublicacion } | { campos: Camp
   };
 }
 
+/**
+ * Valida el link de contacto que reemplaza a WhatsApp.
+ *
+ * El constraint de la tabla rechaza lo mismo, pero un error de Postgres no le
+ * dice a nadie qué corregir. Se exige https porque este link se abre desde
+ * nuestro dominio: mandar gente a http es regalarle la sesión a cualquiera
+ * que esté en el medio de la red.
+ */
+function parsearUrlContacto(
+  datos: FormData,
+): { error: EstadoPublicacion } | { valor: string | null } {
+  const crudo = datos.get("url_contacto");
+  const texto = typeof crudo === "string" ? crudo.trim() : "";
+  if (!texto) return { valor: null };
+
+  let url: URL;
+  try {
+    url = new URL(texto);
+  } catch {
+    return {
+      error: { error: "El link de contacto no es una dirección válida.", campo: "url_contacto" },
+    };
+  }
+
+  if (url.protocol !== "https:") {
+    return {
+      error: { error: "El link tiene que empezar con https://", campo: "url_contacto" },
+    };
+  }
+
+  if (texto.length < 12 || texto.length > 500) {
+    return {
+      error: { error: "El link va entre 12 y 500 caracteres.", campo: "url_contacto" },
+    };
+  }
+
+  // El dominio tiene que estar habilitado. Guardar uno que no lo está sería
+  // peor que rechazarlo: el botón diría "Pedir por formulario" y el redirect
+  // mandaría igual a WhatsApp, porque se vuelve a validar al salir.
+  if (!contactoPermitido(texto)) {
+    return {
+      error: {
+        error:
+          `El dominio ${hostDe(texto) ?? "de ese link"} no está habilitado. ` +
+          `Por ahora sólo: ${hostsPermitidos().join(", ")}.`,
+        campo: "url_contacto",
+      },
+    };
+  }
+
+  return { valor: texto };
+}
+
 /** Guarda el teléfono en el perfil, o avisa si todavía no hay ninguno. */
 async function asegurarTelefono(
   supabase: Awaited<ReturnType<typeof crearClienteServidor>>,
@@ -206,9 +260,19 @@ export async function crearPublicacion(
   );
   if (falta) return falta;
 
+  // Mismo criterio que al editar: la columna sólo se manda si quien publica
+  // es admin. Para el resto ni viaja, así que el botón sigue siendo WhatsApp.
+  const { data: esAdmin } = await supabase.rpc("es_admin");
+  let campos = parsed.campos;
+  if (esAdmin) {
+    const link = parsearUrlContacto(datos);
+    if ("error" in link) return link.error;
+    campos = { ...campos, url_contacto: link.valor };
+  }
+
   const { data: creada, error } = await supabase
     .from("publicaciones")
-    .insert({ ...parsed.campos, autor_id: user.id })
+    .insert({ ...campos, autor_id: user.id })
     .select("id")
     .single();
 
@@ -299,11 +363,22 @@ export async function actualizarPublicacion(
   const parsed = parsear(datos);
   if ("error" in parsed) return parsed.error;
 
+  // El link de contacto se lee sólo si quien edita es admin. Para cualquier
+  // otro ni se manda la columna, así que un campo agregado a mano en el
+  // navegador no cambia nada: la policy de la tabla lo rechazaría igual.
+  const { data: esAdmin } = await supabase.rpc("es_admin");
+  let campos = parsed.campos;
+  if (esAdmin) {
+    const link = parsearUrlContacto(datos);
+    if ("error" in link) return link.error;
+    campos = { ...campos, url_contacto: link.valor };
+  }
+
   // El .eq('autor_id') es redundante con la política RLS, pero deja explícito
   // en el código que acá nadie edita lo ajeno.
   const { error } = await supabase
     .from("publicaciones")
-    .update(parsed.campos)
+    .update(campos)
     .eq("id", id)
     .eq("autor_id", user.id);
 

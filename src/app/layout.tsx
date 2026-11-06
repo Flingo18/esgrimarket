@@ -5,6 +5,7 @@ import Script from "next/script";
 import Link from "next/link";
 
 import { Encabezado } from "@/components/encabezado";
+import { jsonLd } from "@/lib/json-ld";
 
 import "./globals.css";
 
@@ -91,7 +92,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col font-sans">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(DATOS_DEL_SITIO) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(DATOS_DEL_SITIO) }}
         />
         <Encabezado />
         <main className="flex-1">{children}</main>

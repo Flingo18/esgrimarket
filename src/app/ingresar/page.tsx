@@ -12,8 +12,12 @@ const ERRORES: Record<string, string> = {
 };
 
 export default async function PaginaIngresar({ searchParams }: PageProps<"/ingresar">) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
   const mensaje = typeof error === "string" ? ERRORES[error] : undefined;
+  // A dónde seguir después de entrar. Lo manda quien redirigió hasta acá, por
+  // ejemplo el listado de publicaciones cuando se llega desde un mail. Se
+  // revalida en el servidor antes de usarlo, en `validarCodigo`.
+  const destino = typeof next === "string" ? next : undefined;
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
@@ -29,7 +33,7 @@ export default async function PaginaIngresar({ searchParams }: PageProps<"/ingre
       )}
 
       <div className="mt-8">
-        <FormularioIngreso />
+        <FormularioIngreso next={destino} />
       </div>
     </div>
   );

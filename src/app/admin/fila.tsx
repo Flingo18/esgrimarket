@@ -13,6 +13,7 @@ type Usuario = {
   rol: "admin" | "pro" | "regular";
   telefono: string | null;
   activas: number;
+  publicaciones: number;
   alta: string;
   suspendido: boolean;
 };
@@ -43,7 +44,13 @@ export function FilaUsuario({
         </Link>
         <p className="text-sm text-texto-suave truncate">
           {u.nombre ? `${u.email} · ` : ""}
-          {u.activas} {u.activas === 1 ? "activa" : "activas"}
+          {/* "0 activas" en una cuenta que publicó cinco veces y se le
+              vencieron todas decía lo mismo que en una que nunca publicó. */}
+          {u.publicaciones === 0
+            ? "sin publicaciones"
+            : u.publicaciones === u.activas
+              ? `${u.activas} ${u.activas === 1 ? "activa" : "activas"}`
+              : `${u.activas} de ${u.publicaciones} activas`}
           {u.telefono ? ` · ${u.telefono}` : " · sin teléfono"}
           {u.suspendido && " · SUSPENDIDA"}
         </p>

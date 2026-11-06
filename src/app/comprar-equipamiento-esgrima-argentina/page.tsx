@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { jsonLd } from "@/lib/json-ld";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -64,7 +65,7 @@ export default async function PaginaGuiaCompra() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             "@context": "https://schema.org",
             "@type": "FAQPage",
             mainEntity: PREGUNTAS.map((p) => ({

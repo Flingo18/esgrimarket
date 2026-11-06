@@ -16,7 +16,10 @@ const SITUACIONES: Record<string, { label: string; clase: string }> = {
   activa: { label: "Activa", clase: "bg-acento-suave text-acento" },
   vendida: { label: "Vendida", clase: "bg-fondo-sutil text-texto-suave" },
   pausada: { label: "Pausada", clase: "bg-fondo-sutil text-texto-suave" },
-  vencida: { label: "Vencida", clase: "bg-fondo-sutil text-texto-suave" },
+  // Vencida va en color de alerta y no en gris: "vendida" es algo que la
+  // persona decidió, "vencida" es algo que le pasó sin enterarse, y son las
+  // únicas que puede recuperar.
+  vencida: { label: "Vencida", clase: "bg-alerta/10 text-alerta" },
 };
 
 const BOTON =
@@ -35,7 +38,10 @@ export default async function MisPublicaciones({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/ingresar");
+  // Se le pasa el destino al login porque a esta pantalla se llega desde los
+  // mails de vencimiento: sin esto, quien tenga la sesión caducada ingresa y
+  // aparece en la home, sin la publicación que lo trajo hasta acá.
+  if (!user) redirect("/ingresar?next=%2Fmis-publicaciones");
 
   const [{ data: publicaciones }, { data: limiteCupo }, cotizacion] = await Promise.all([
     supabase
@@ -54,6 +60,7 @@ export default async function MisPublicaciones({
   const sinFoto = lista.filter(
     (p) => p.situacion === "activa" && p.fotos.length === 0,
   ).length;
+  const vencidas = lista.filter((p) => p.situacion === "vencida").length;
   const limite = limiteCupo ?? 5;
 
   return (
@@ -82,6 +89,15 @@ export default async function MisPublicaciones({
         </p>
       )}
 
+      {vencidas > 0 && (
+        <p className="mt-4 rounded-lg border border-alerta/40 bg-alerta/10 px-3 py-2 text-sm text-alerta">
+          {vencidas === 1
+            ? "Tenés una publicación vencida y ya no se muestra."
+            : `Tenés ${vencidas} publicaciones vencidas y ya no se muestran.`}{" "}
+          Si seguís vendiendo, volvé a publicarlas y quedan otros 45 días.
+        </p>
+      )}
+
       {typeof error === "string" && (
         <p className="mt-4 rounded-lg border border-alerta/40 bg-alerta/10 px-3 py-2 text-sm text-alerta">
           {error}
@@ -104,11 +120,20 @@ export default async function MisPublicaciones({
             const foto = [...p.fotos].sort((a, b) => a.orden - b.orden)[0];
             const situacion = SITUACIONES[p.situacion] ?? SITUACIONES.activa;
             const dias = diasRestantes(p.vence_en);
+            // El cron corre una vez por día, así que hay una ventana de hasta
+            // 24 h en la que la publicación sigue figurando como activa pero
+            // el sitio ya la esconde: la regla de lectura exige `vence_en >
+            // now()`. Sin esto la pantalla diría "Activa" sobre algo que no
+            // ve nadie.
+            const caduca = p.situacion === "vencida" || dias <= 0;
 
             return (
               <li
                 key={p.id}
-                className="rounded-xl border border-borde bg-fondo-elevado p-3 flex gap-3"
+                // Ancla para que el link de los mails de vencimiento caiga
+                // sobre la publicación y no al principio de la lista.
+                id={`p-${p.id}`}
+                className="rounded-xl border border-borde bg-fondo-elevado p-3 flex gap-3 scroll-mt-4 target:border-acento"
               >
                 <div className="relative size-20 shrink-0 rounded-lg overflow-hidden bg-fondo-sutil">
                   {foto ? (
@@ -160,14 +185,25 @@ export default async function MisPublicaciones({
                     </p>
                   )}
 
+                  {caduca && p.situacion !== "vendida" && (
+                    <p className="mt-1 text-xs text-alerta">
+                      Venció y ya no se muestra. Si seguís vendiéndola, tocá
+                      “Volver a publicar” y queda otros 45 días.
+                    </p>
+                  )}
+
                   <p className="mt-1 text-xs text-texto-suave">
                     {p.contactos === 0
                       ? "Nadie la consultó todavía"
                       : `${p.contactos} ${p.contactos === 1 ? "consulta" : "consultas"} por WhatsApp`}
                     {p.situacion === "activa" &&
-                      (dias > 0
-                        ? ` · vence en ${dias} ${dias === 1 ? "día" : "días"}`
-                        : " · vencida")}
+                      dias > 0 &&
+                      ` · vence en ${dias} ${dias === 1 ? "día" : "días"}`}
+                    {caduca &&
+                      p.situacion !== "vendida" &&
+                      (dias === 0
+                        ? " · venció hoy"
+                        : ` · venció hace ${-dias} ${dias === -1 ? "día" : "días"}`)}
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
