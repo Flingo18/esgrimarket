@@ -18,6 +18,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
     sala: resultadoSala,
     torneo: resultadoTorneo,
     cuentas,
+    tab: tabPedida,
   } = await searchParams;
   const supabase = await crearClienteServidor();
   const {
@@ -160,9 +161,54 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
     ["sin", "Sin ninguna", filas.length - conPublicaciones.length],
   ] as const;
 
+  // La página era una sola columna de secciones apiladas: para llegar a las
+  // cuentas había que pasar por todo el calendario. Cada una va en su solapa.
+  const SOLAPAS = [
+    { id: "resumen", nombre: "Resumen", pendientes: 0 },
+    { id: "torneos", nombre: "Torneos", pendientes: torneosPendientes?.length ?? 0 },
+    { id: "salas", nombre: "Salas", pendientes: salasPendientes?.length ?? 0 },
+    { id: "cuentas", nombre: "Cuentas", pendientes: 0 },
+  ] as const;
+
+  // Después de aprobar algo, la acción vuelve a /admin con el resultado en la
+  // query y sin solapa. Se deduce de ahí: si no, el cartel de "Sala aprobada"
+  // aparecería sobre el resumen, lejos de lo que se acaba de aprobar.
+  const solapa =
+    typeof resultadoSala === "string"
+      ? "salas"
+      : typeof resultadoTorneo === "string"
+        ? "torneos"
+        : SOLAPAS.some((x) => x.id === tabPedida)
+          ? (tabPedida as (typeof SOLAPAS)[number]["id"])
+          : "resumen";
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">Administración</h1>
+
+      {/* El contador va en la solapa y no adentro: lo que espera aprobación
+          hay que poder verlo sin entrar a buscarlo. */}
+      <nav className="mt-5 flex flex-wrap gap-1 border-b border-borde">
+        {SOLAPAS.map((x) => (
+          <Link
+            key={x.id}
+            href={x.id === "resumen" ? "/admin" : `/admin?tab=${x.id}`}
+            aria-current={x.id === solapa ? "page" : undefined}
+            className={`-mb-px rounded-t-lg border-b-2 px-3 py-2 text-sm ${
+              x.id === solapa
+                ? "border-acento font-medium text-texto"
+                : "border-transparent text-texto-suave hover:text-texto"
+            }`}
+          >
+            {x.nombre}
+            {x.pendientes > 0 && (
+              <span className="ml-1.5 rounded-full bg-acento text-acento-texto text-xs px-1.5 py-0.5">
+                {x.pendientes}
+              </span>
+            )}
+          </Link>
+        ))}
+      </nav>
 
       {typeof resultadoTorneo === "string" && (
         <p className="mt-4 rounded-lg border border-precio/40 bg-precio/10 px-3 py-2 text-sm text-precio">
@@ -202,29 +248,33 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         </p>
       ) : null}
 
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          ["Cuentas", filas.length],
-          ["Pro", porRol("pro")],
-          ["Publicaciones", publicaciones ?? 0],
-          ["Activas", totalActivas],
-        ].map(([label, valor]) => (
-          <div
-            key={String(label)}
-            className="rounded-xl border border-borde bg-fondo-elevado p-3"
-          >
-            <p className="text-2xl font-semibold">{valor}</p>
-            <p className="text-sm text-texto-suave">{label}</p>
-          </div>
-        ))}
-      </div>
+      {solapa === "resumen" && (
+        <>
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            ["Cuentas", filas.length],
+            ["Pro", porRol("pro")],
+            ["Publicaciones", publicaciones ?? 0],
+            ["Activas", totalActivas],
+          ].map(([label, valor]) => (
+            <div
+              key={String(label)}
+              className="rounded-xl border border-borde bg-fondo-elevado p-3"
+            >
+              <p className="text-2xl font-semibold">{valor}</p>
+              <p className="text-sm text-texto-suave">{label}</p>
+            </div>
+          ))}
+        </div>
 
-      <Crecimiento
-        altas={(usuarios?.users ?? []).map((u) => u.created_at)}
-        publicaciones={(publicacionesPorAutor ?? []).map((p) => p.creado_en)}
-      />
+        <Crecimiento
+          altas={(usuarios?.users ?? []).map((u) => u.created_at)}
+          publicaciones={(publicacionesPorAutor ?? []).map((p) => p.creado_en)}
+        />
+        </>
+      )}
 
-      {torneosPendientes && torneosPendientes.length > 0 && (
+      {solapa === "torneos" && torneosPendientes && torneosPendientes.length > 0 && (
         <>
           <h2 className="mt-10 text-lg font-semibold">
             Torneos esperando aprobación ({torneosPendientes.length})
@@ -241,7 +291,7 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         </>
       )}
 
-      {salasPendientes && salasPendientes.length > 0 && (
+      {solapa === "salas" && salasPendientes && salasPendientes.length > 0 && (
         <>
           <h2 className="mt-10 text-lg font-semibold">
             Salas esperando aprobación ({salasPendientes.length})
@@ -258,122 +308,133 @@ export default async function PaginaAdmin({ searchParams }: PageProps<"/admin">)
         </>
       )}
 
-      <div className="mt-10 flex items-baseline justify-between gap-4">
-        <h2 className="text-lg font-semibold">
-          Torneos ({torneosProximos.length})
-        </h2>
-        <div className="flex gap-4">
-          <Link href="/admin/categorias" className="text-sm text-acento underline">
-            Categorías
-          </Link>
-          <Link href="/torneos/proponer" className="text-sm text-acento underline">
-            Agregar uno
-          </Link>
-        </div>
-      </div>
-
-      <ul className="mt-3 space-y-2">
-        {torneosProximos.map((t) => (
-          <FilaTorneo key={t.id} torneo={{ ...t, quien: quien(t.propuesto_por) }} />
-        ))}
-      </ul>
-
-      {torneosPasados.length > 0 && (
-        <details className="mt-3">
-          <summary className="cursor-pointer text-sm text-texto-suave hover:text-texto">
-            Ver los {torneosPasados.length} que ya pasaron
-          </summary>
-          <ul className="mt-3 space-y-2">
-            {torneosPasados.map((t) => (
-              <FilaTorneo key={t.id} torneo={{ ...t, quien: quien(t.propuesto_por) }} />
-            ))}
-          </ul>
-        </details>
-      )}
-
-      <div className="mt-10 flex items-baseline justify-between gap-4">
-        <h2 className="text-lg font-semibold">
-          Salas ({todasLasSalas?.length ?? 0})
-        </h2>
-        <Link href="/salas/proponer" className="text-sm text-acento underline">
-          Agregar una
-        </Link>
-      </div>
-
-      <ul className="mt-3 grid sm:grid-cols-2 gap-2">
-        {(todasLasSalas ?? []).map((s) => (
-          <li
-            key={s.id}
-            className="rounded-xl border border-borde bg-fondo-elevado p-3 flex items-center gap-3"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="font-medium truncate">{s.nombre}</p>
-              <p className="text-xs text-texto-suave">
-                {s.barrio ?? "Sin barrio"}
-                {!s.lat && " · sin punto en el mapa"}
-                {!s.activa && " · oculta"}
-                {" · "}
-                {quien(s.propuesta_por) ? (
-                  <Link
-                    href={`/admin/usuarios/${s.propuesta_por}`}
-                    className="text-acento underline"
-                  >
-                    {quien(s.propuesta_por)!.etiqueta}
-                  </Link>
-                ) : (
-                  "cargada en la importación"
-                )}
-              </p>
-            </div>
-            <Link
-              href={`/admin/salas/${s.id}`}
-              className="shrink-0 rounded-lg border border-borde px-3 py-1.5 text-sm hover:border-acento"
-            >
-              Editar
+      {solapa === "torneos" && (
+        <>
+        <div className="mt-10 flex items-baseline justify-between gap-4">
+          <h2 className="text-lg font-semibold">
+            Torneos ({torneosProximos.length})
+          </h2>
+          <div className="flex gap-4">
+            <Link href="/admin/categorias" className="text-sm text-acento underline">
+              Categorías
             </Link>
-          </li>
-        ))}
-      </ul>
+            <Link href="/torneos/proponer" className="text-sm text-acento underline">
+              Agregar uno
+            </Link>
+          </div>
+        </div>
 
-      <h2 id="cuentas" className="mt-10 text-lg font-semibold scroll-mt-4">
-        Cuentas
-      </h2>
-      <p className="text-sm text-texto-suave mt-1">
-        <strong className="text-texto">Pro</strong> puede publicar hasta 200
-        artículos y cargar stock. <strong className="text-texto">Regular</strong>{" "}
-        publica de a una unidad, hasta 5 activas.
-      </p>
-
-      {/* El hash devuelve a esta sección: sin él, filtrar te manda al tope de
-          una página larga y hay que volver a bajar cada vez. */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {FILTROS.map(([clave, etiqueta, n]) => (
-          <Link
-            key={clave}
-            href={
-              clave === "todas" ? "/admin#cuentas" : `/admin?cuentas=${clave}#cuentas`
-            }
-            className={`rounded-lg border px-3 py-1.5 text-sm ${
-              filtro === clave
-                ? "border-acento bg-acento text-acento-texto"
-                : "border-borde hover:border-acento"
-            }`}
-          >
-            {etiqueta} ({n})
-          </Link>
-        ))}
-      </div>
-
-      {cuentasVisibles.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-borde bg-fondo-sutil px-3 py-3 text-sm text-texto-suave">
-          Ninguna cuenta queda en este filtro.
-        </p>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {cuentasVisibles.map((f) => (
-            <FilaUsuario key={f.id} usuario={f} esUnoMismo={f.id === user.id} />
+        <ul className="mt-3 space-y-2">
+          {torneosProximos.map((t) => (
+            <FilaTorneo key={t.id} torneo={{ ...t, quien: quien(t.propuesto_por) }} />
           ))}
         </ul>
+
+        {torneosPasados.length > 0 && (
+          <details className="mt-3">
+            <summary className="cursor-pointer text-sm text-texto-suave hover:text-texto">
+              Ver los {torneosPasados.length} que ya pasaron
+            </summary>
+            <ul className="mt-3 space-y-2">
+              {torneosPasados.map((t) => (
+                <FilaTorneo key={t.id} torneo={{ ...t, quien: quien(t.propuesto_por) }} />
+              ))}
+            </ul>
+          </details>
+        )}
+        </>
+      )}
+
+      {solapa === "salas" && (
+        <>
+        <div className="mt-10 flex items-baseline justify-between gap-4">
+          <h2 className="text-lg font-semibold">
+            Salas ({todasLasSalas?.length ?? 0})
+          </h2>
+          <Link href="/salas/proponer" className="text-sm text-acento underline">
+            Agregar una
+          </Link>
+        </div>
+
+        <ul className="mt-3 grid sm:grid-cols-2 gap-2">
+          {(todasLasSalas ?? []).map((s) => (
+            <li
+              key={s.id}
+              className="rounded-xl border border-borde bg-fondo-elevado p-3 flex items-center gap-3"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-medium truncate">{s.nombre}</p>
+                <p className="text-xs text-texto-suave">
+                  {s.barrio ?? "Sin barrio"}
+                  {!s.lat && " · sin punto en el mapa"}
+                  {!s.activa && " · oculta"}
+                  {" · "}
+                  {quien(s.propuesta_por) ? (
+                    <Link
+                      href={`/admin/usuarios/${s.propuesta_por}`}
+                      className="text-acento underline"
+                    >
+                      {quien(s.propuesta_por)!.etiqueta}
+                    </Link>
+                  ) : (
+                    "cargada en la importación"
+                  )}
+                </p>
+              </div>
+              <Link
+                href={`/admin/salas/${s.id}`}
+                className="shrink-0 rounded-lg border border-borde px-3 py-1.5 text-sm hover:border-acento"
+              >
+                Editar
+              </Link>
+            </li>
+          ))}
+        </ul>
+        </>
+      )}
+
+      {solapa === "cuentas" && (
+        <>
+        <h2 className="mt-10 text-lg font-semibold">Cuentas</h2>
+        <p className="text-sm text-texto-suave mt-1">
+          <strong className="text-texto">Pro</strong> puede publicar hasta 200
+          artículos y cargar stock. <strong className="text-texto">Regular</strong>{" "}
+          publica de a una unidad, hasta 5 activas.
+        </p>
+
+        {/* El filtro conserva la solapa: sin eso, filtrar volvía al resumen. */}
+        <div className="mt-4 flex flex-wrap gap-2">
+          {FILTROS.map(([clave, etiqueta, n]) => (
+            <Link
+              key={clave}
+              href={
+                clave === "todas"
+                  ? "/admin?tab=cuentas"
+                  : `/admin?tab=cuentas&cuentas=${clave}`
+              }
+              className={`rounded-lg border px-3 py-1.5 text-sm ${
+                filtro === clave
+                  ? "border-acento bg-acento text-acento-texto"
+                  : "border-borde hover:border-acento"
+              }`}
+            >
+              {etiqueta} ({n})
+            </Link>
+          ))}
+        </div>
+
+        {cuentasVisibles.length === 0 ? (
+          <p className="mt-4 rounded-lg border border-borde bg-fondo-sutil px-3 py-3 text-sm text-texto-suave">
+            Ninguna cuenta queda en este filtro.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {cuentasVisibles.map((f) => (
+              <FilaUsuario key={f.id} usuario={f} esUnoMismo={f.id === user.id} />
+            ))}
+          </ul>
+        )}
+        </>
       )}
     </div>
   );
