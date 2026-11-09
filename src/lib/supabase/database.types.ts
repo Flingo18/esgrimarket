@@ -128,6 +128,8 @@ export type Database = {
           es_oficial: boolean;
           unidades: number;
           url_contacto: string | null;
+          aviso_por_vencer_en: string | null;
+          aviso_vencida_en: string | null;
           vence_en: string;
           contactos: number;
           creado_en: string;
@@ -160,6 +162,8 @@ export type Database = {
           es_oficial?: boolean;
           unidades?: number;
           url_contacto?: string | null;
+          aviso_por_vencer_en?: string | null;
+          aviso_vencida_en?: string | null;
           vence_en?: string;
           contactos?: number;
           creado_en?: string;

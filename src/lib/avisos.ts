@@ -41,11 +41,26 @@ type Mail = {
   html: string;
 };
 
-async function mandar(m: Mail): Promise<boolean> {
+/**
+ * Qué pasó con un envío.
+ *
+ * Se distingue "no está configurado" de "Resend lo rechazó" porque se
+ * arreglan de maneras distintas: lo primero es una variable que falta en
+ * Vercel y lo segundo suele ser el dominio sin verificar. Un `false` pelado
+ * obligaba a ir a buscar la causa a los logs.
+ */
+export type Envio = { ok: true } | { ok: false; motivo: string };
+
+/** Si no está la clave, no se manda nada y el cron lo informa en su respuesta. */
+export function hayClaveResend(): boolean {
+  return Boolean(process.env.RESEND_API_KEY);
+}
+
+async function mandar(m: Mail): Promise<Envio> {
   const clave = process.env.RESEND_API_KEY;
   if (!clave) {
     console.warn("Aviso no enviado: falta RESEND_API_KEY.");
-    return false;
+    return { ok: false, motivo: "falta RESEND_API_KEY" };
   }
 
   try {
@@ -67,14 +82,15 @@ async function mandar(m: Mail): Promise<boolean> {
     if (!r.ok) {
       // El cuerpo dice el motivo real (dominio sin verificar, clave inválida),
       // y sin eso el error es imposible de diagnosticar desde los logs.
-      console.error("Resend rechazó el aviso:", r.status, await r.text());
-      return false;
+      const detalle = await r.text();
+      console.error("Resend rechazó el aviso:", r.status, detalle);
+      return { ok: false, motivo: `Resend respondió ${r.status}: ${detalle.slice(0, 200)}` };
     }
-    return true;
+    return { ok: true };
   } catch (e) {
     // Un aviso que no sale no puede romper nada: sólo se registra.
     console.error("Error mandando aviso:", e);
-    return false;
+    return { ok: false, motivo: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -113,12 +129,14 @@ Podés dejar de recibir estos avisos desde tu cuenta en Esgrimarket.`;
   </p>
 </div>`;
 
-  return mandar({
-    para: a.para,
-    asunto: `Apareció ${a.titulo}`,
-    texto,
-    html,
-  });
+  return (
+    await mandar({
+      para: a.para,
+      asunto: `Apareció ${a.titulo}`,
+      texto,
+      html,
+    })
+  ).ok;
 }
 
 export type AvisoVencimiento = {
@@ -147,7 +165,7 @@ export type AvisoVencimiento = {
  */
 export async function avisarVencimiento(
   a: AvisoVencimiento & { vencida: boolean },
-): Promise<boolean> {
+): Promise<Envio> {
   const boton = a.vencida ? "Volver a publicarla" : "Renovarla";
 
   const asunto = a.vencida
@@ -244,5 +262,5 @@ Podés dejar de recibir estos avisos desde tu cuenta en Esgrimarket.`;
   </p>
 </div>`;
 
-  return mandar({ para: a.para, asunto, texto, html });
+  return (await mandar({ para: a.para, asunto, texto, html })).ok;
 }

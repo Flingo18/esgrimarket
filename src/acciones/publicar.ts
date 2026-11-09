@@ -438,6 +438,12 @@ export async function reactivar(datos: FormData) {
       situacion: "activa",
       // Reactivar sin renovar la fecha la dejaría vencer de nuevo enseguida.
       vence_en: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+      // Empieza un ciclo nuevo, así que los avisos del ciclo anterior ya no
+      // valen. Sin esto el cron, que sólo avisa a quien tiene la marca en
+      // null, no volvería a escribirle a esta publicación nunca más: se
+      // caería del sitio en silencio en cada renovación.
+      aviso_por_vencer_en: null,
+      aviso_vencida_en: null,
     })
     .eq("id", id);
 
